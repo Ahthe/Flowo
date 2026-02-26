@@ -12,6 +12,8 @@ import type {
   TaskPriority,
   UserPreferences,
 } from "./types";
+
+
 import {
   Archive,
   Activity,
@@ -126,7 +128,6 @@ function App() {
     return () => clearInterval(interval);
   }, [setTasks]);
 
-  // Session tracking — anchors timer and saves progress logs on stop
   useEffect(() => {
     const runningTask = tasksRef.current.find((t) => t.status === "running");
 
@@ -487,7 +488,7 @@ function App() {
             <div className="sketch-border p-6 md:p-8 bg-white transform -rotate-1 relative shadow-2xl m-4">
               <button
                 onClick={() => { playPop(); setEditingTaskId(null); }}
-                className="absolute -top-4 -right-4 bg-ink text-white p-2 sketch-border hover:bg-highlighter-pink hover:text-ink transition-all"
+                className="absolute -top-2 -right-4 bg-ink text-white p-2 sketch-border hover:bg-highlighter-pink hover:text-ink transition-all"
               >
                 <ChevronRight className="rotate-180" size={24} />
               </button>

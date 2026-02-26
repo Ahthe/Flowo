@@ -8,7 +8,6 @@ import { SupabaseService } from '../supabase/supabase.service';
 @Injectable()
 export class AiService {
   private groq: Groq;
-
   constructor(
     private configService: ConfigService,
     private supabaseService: SupabaseService,

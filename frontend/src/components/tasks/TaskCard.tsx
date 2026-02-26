@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Play, Pause, Square, BarChart3, Trash2, ListTree, AlertCircle, Circle, Edit2, Check, X } from 'lucide-react';
-import type { Task, TaskHistory, TaskPriority } from '../../types';
+import { Play, Pause, Square, BarChart3, Trash2, ListTree, AlertCircle, Edit2, Check, X } from 'lucide-react';
+import type { Task, TaskHistory } from '../../types';
 import { useSound } from '../../hooks/useSound';
 
 interface TaskCardProps {
@@ -38,8 +38,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
   };
 
   const priorityMarkers = {
-    low: <Circle size={10} className="text-ink-light" />,
-    medium: <div className="w-2 h-2 rounded-full bg-highlighter-yellow animate-pulse" />,
+    low: <AlertCircle size={24} className="text-ink-light fill-ink-light" />,
+    medium: <AlertCircle size={14} className="text-highlighter-yellow fill-highlighter-yellow" />,
     high: <AlertCircle size={14} className="text-highlighter-pink fill-highlighter-pink" />
   };
 
@@ -89,15 +89,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
       <div className="mb-4 space-y-2">
         <div className="flex items-center gap-2">
            <BarChart3 size={12} className="opacity-40" />
-           <select 
-             value={task.priority}
-             onChange={e => onUpdate(task.id, { priority: e.target.value as TaskPriority })}
-             className="font-sketch text-xs uppercase opacity-60 bg-transparent border-none focus:outline-none cursor-pointer hover:bg-highlighter-yellow/20 rounded px-1"
-           >
-              <option value="low">Low Priority</option>
-              <option value="medium">Medium Priority</option>
-              <option value="high">High Priority</option>
-           </select>
+           <span className="font-sketch text-xs uppercase opacity-60">{task.priority}</span>  
         </div>
         
         <div className="flex items-center gap-4 opacity-70 font-sketch text-xs mt-2">
@@ -145,7 +137,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
           )}
         </div>
 
-        {/* ─── Completion Overlay with Satisfaction Slider ─── */}
         {isCompleting && (
           <div 
              className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200"
