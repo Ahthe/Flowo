@@ -2,7 +2,7 @@
 
 It is a productivity system designed to help you plan, execute, and analyze your work. It is built for students and who need more than a simple to-do list.
 
-*The name Vellum refers to the high-quality parchment used for historical manuscripts. This choice reflects the application's purpose: to serve as a premium, durable workspace for your most significant projects.*🐇
+*The name Vellum refers to the high-quality parchment used for historical manuscripts. This choice reflects the application's purpose: to serve as a premium, durable workspace for your most significant projects.* 🐇
 
 ![Alt text](https://github.com/emanalytic/Vellum/blob/main/image.png)
 
