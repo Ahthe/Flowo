@@ -453,23 +453,9 @@ Contributions are welcome. Here is how to get started:
 1. Fork the repository and clone your fork locally.
 2. Create a branch for your change (`git checkout -b fix/your-change`).
 3. Make your changes. See the table below to find the right files.
-4. Test locally — run both the backend (`npm run start:dev`) and frontend (`npm run dev`) and make sure nothing is broken.
+4. Test locally run both the backend (`npm run start:dev`) and frontend (`npm run dev`) and make sure nothing is broken.
 5. Commit with a clear message describing what you changed and why.
 6. Open a pull request against `main`.
-
-### Where to make common changes
-
-| If you want to...                       | Start here                                                               |
-| --------------------------------------- | ------------------------------------------------------------------------ |
-| Change how tasks are scheduled          | `backend/src/scheduler/scheduler.service.ts`                             |
-| Add a new API endpoint                  | Create or edit a controller in `backend/src/tasks/` or `backend/src/ai/` |
-| Change the database schema              | Add a new `.sql` file in `backend/database/migrations/`                  |
-| Fix the calendar layout                 | `frontend/src/views/CalendarView.tsx` → `positionedInstances`            |
-| Change how tasks are created or updated | `frontend/src/hooks/useTasks.ts`                                         |
-| Edit the task card UI                   | `frontend/src/components/tasks/TaskCard.tsx`                             |
-| Add a new chart or analytic             | `frontend/src/views/AnalysisView.tsx`                                    |
-| Change the AI prompt or model           | `backend/src/ai/ai.service.ts`                                           |
-| Adjust the daily AI limit               | `backend/database/migrations/009_atomic_ai_usage.sql`                    |
 
 ### Guidelines
 
