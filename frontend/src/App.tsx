@@ -61,6 +61,8 @@ function App() {
     updateChunk,
     addChunk,
     deleteChunk,
+    removeInstance,
+    addPinnedInstance,
   } = useTasks(session);
 
   const [sessionStartTime, setSessionStartTime] = useState<string | null>(null);
@@ -213,11 +215,6 @@ function App() {
       setSession(session);
       if (session) {
         initPreferences();
-        if (window.location.hash) {
-          setTimeout(() => {
-            window.history.replaceState(null, "", window.location.pathname + window.location.search);
-          }, 0);
-        }
       }
       setIsLoadingSession(false);
     });
@@ -228,18 +225,12 @@ function App() {
       setSession(session);
       if (session) {
         initPreferences();
-        if (window.location.hash) {
-          setTimeout(() => {
-            window.history.replaceState(null, "", window.location.pathname + window.location.search);
-          }, 0);
-        }
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Tasks are fetched by the useTasks hook when session changes — only load preferences here
   const initPreferences = async () => {
     try {
       const dbPrefs = await api.getPreferences();
@@ -252,26 +243,7 @@ function App() {
     }
   };
 
-  const handleScheduleTask = async (
-    taskId: string,
-    date: Date,
-    hour: number,
-  ) => {
-    if (!session) return;
-    const task = tasksRef.current.find((t) => t.id === taskId);
-    const durationMin = task
-      ? parseInt(task.estimatedTime.replace("m", "")) || 60
-      : 60;
 
-    const start = new Date(date);
-    start.setHours(hour, 0, 0, 0);
-    const end = new Date(start.getTime() + durationMin * 60000);
-
-    await updateTask(taskId, {
-      scheduledStart: start.toISOString(),
-      scheduledEnd: end.toISOString(),
-    });
-  };
 
   const handlePreferenceChange = async (newPrefs: UserPreferences) => {
     if (!session) return;
@@ -458,8 +430,8 @@ function App() {
                   setActiveTab("journal");
                 }}
                 onTaskClick={(task: Task) => setEditingTaskId(task.id)}
-                onScheduleTask={handleScheduleTask}
-                onDeleteTask={deleteTask}
+                onScheduleTask={addPinnedInstance}
+                onRemoveInstance={removeInstance}
                 onTabChange={setActiveTab}
               />
             )}

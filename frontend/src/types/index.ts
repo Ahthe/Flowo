@@ -47,6 +47,7 @@ export interface TaskInstance {
   end: string;
   status: 'scheduled' | 'completed' | 'missed' | 'skipped';
   actualDurationSeconds?: number;
+  isPinned?: boolean;
 }
 
 export interface UserPreferences {

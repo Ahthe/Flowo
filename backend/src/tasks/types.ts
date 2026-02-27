@@ -7,6 +7,21 @@ export interface TaskInstance {
   actualDurationSeconds?: number;
 }
 
+export interface TaskChunk {
+  id: string;
+  taskId: string;
+  chunkName: string;
+  duration: number;
+  completed: boolean;
+}
+
+export interface TaskHistory {
+  date: string;
+  startTime: string;
+  endTime: string;
+  durationSeconds: number;
+}
+
 export interface Task {
   id: string;
   description: string;
@@ -23,9 +38,9 @@ export interface Task {
   actualSatisfaction?: number;
   targetSessionsPerDay?: number;
   minSpacingMinutes?: number;
-  chunks?: any[];
+  chunks?: TaskChunk[];
   instances?: TaskInstance[];
-  history?: any[];
+  history?: TaskHistory[];
 }
 
 export interface UserPreferences {

@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Delete,
+  Patch,
   UseGuards,
   Req,
   UnauthorizedException,
@@ -38,6 +39,28 @@ export class TasksController {
   @Delete('chunk/:chunkId')
   removeChunk(@Req() req: any, @Param('chunkId') chunkId: string) {
     return this.tasksService.removeChunk(this.extractToken(req), req.user.id, chunkId);
+  }
+
+  @Delete('instance/:instanceId')
+  removeInstance(@Req() req: any, @Param('instanceId') instanceId: string) {
+    return this.tasksService.removeInstance(this.extractToken(req), req.user.id, instanceId);
+  }
+
+  @Post('instance')
+  createInstance(
+    @Req() req: any,
+    @Body() payload: { taskId: string, start: string, end: string, isPinned: boolean },
+  ) {
+    return this.tasksService.createInstance(this.extractToken(req), req.user.id, payload);
+  }
+
+  @Patch('instance/:instanceId/pin')
+  pinInstance(
+    @Req() req: any,
+    @Param('instanceId') instanceId: string,
+    @Body('isPinned') isPinned: boolean,
+  ) {
+    return this.tasksService.pinInstance(this.extractToken(req), req.user.id, instanceId, isPinned);
   }
 
   @Post('log/:taskId')

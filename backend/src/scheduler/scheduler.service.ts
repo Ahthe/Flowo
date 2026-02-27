@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { TasksService } from '../tasks/tasks.service';
 import { ScheduleDto } from './dto/schedule.dto';
+import { DateTime } from 'luxon';
 
 interface TimeSlot {
   start: number;
@@ -52,7 +53,7 @@ export class SchedulerService {
     const existingSlots = this.buildTimeSlots(
       tasks.flatMap(t => (t.instances || []).filter((i: any) => i.status === 'scheduled'))
     );
-    const peakHours = this.buildPeakHoursMap(tasks, clientTz);
+    const peakHours = await this.buildPeakHoursMap(token, userId, clientTz);
 
     const { scheduled, unschedulableTasks } = this.fastSchedule(
       activeTasks,
@@ -82,15 +83,20 @@ export class SchedulerService {
     }));
   }
 
-  private buildPeakHoursMap(tasks: any[], tz: string): number[] {
+  private async buildPeakHoursMap(token: string, userId: string, tz: string): Promise<number[]> {
     const hours = new Array(24).fill(0);
-    for (const task of tasks) {
-      for (const log of task.history || []) {
-        if (log.startTime) {
-          const h = this.getHourInTz(new Date(log.startTime).getTime(), tz);
-          hours[h]++;
+    try {
+      const client = this.tasksService['getClient'](token);
+      const { data, error } = await client.rpc('get_user_peak_hours', { uid: userId, tz });
+      if (!error && data) {
+        for (const row of data) {
+          if (row.hour >= 0 && row.hour < 24) {
+            hours[row.hour] = Number(row.log_count) || 0;
+          }
         }
       }
+    } catch (e) {
+      console.warn('Failed to fetch peak hours via RPC, falling back to empty array', e);
     }
     return hours;
   }
@@ -270,43 +276,18 @@ export class SchedulerService {
   }
 
   private getHourInTz(timestamp: number, tz: string): number {
-    const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: tz,
-      hour: 'numeric',
-      hour12: false,
-    }).formatToParts(new Date(timestamp));
-    const hStr = parts.find(p => p.type === 'hour')?.value || '0';
-    let h = parseInt(hStr, 10);
-    if (h === 24) h = 0;
-    return h;
+    return DateTime.fromMillis(timestamp).setZone(tz).hour;
   }
 
   private getTimestamp(date: Date, hour: number, minute: number, tz: string): number {
-    const formatter = new Intl.DateTimeFormat('en-US', { 
-      timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' 
-    });
-    const parts = formatter.formatToParts(date);
-    const y = parts.find(p => p.type === 'year')?.value;
-    const m = parts.find(p => p.type === 'month')?.value;
-    const d = parts.find(p => p.type === 'day')?.value;
-    
-    // Create UTC-normalized date string for the target TZ
-    const targetIso = `${y}-${m}-${d}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
-    const tempUtc = new Date(targetIso + 'Z');
-    
-    // Calculate the drift by checking what hour that UTC timestamp represents in the target TZ
-    const checkHour = this.getHourInTz(tempUtc.getTime(), tz);
-    
-    const diff = hour - checkHour;
-    return tempUtc.getTime() + diff * 3600000;
+    return DateTime.fromJSDate(date)
+      .setZone(tz)
+      .set({ hour, minute, second: 0, millisecond: 0 })
+      .toMillis();
   }
 
   private getDayName(date: Date, tz: string): string {
-    try {
-      return new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'long' }).format(date);
-    } catch {
-      return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
-    }
+    return DateTime.fromJSDate(date).setZone(tz).weekdayLong || 'Monday';
   }
 
   private parseDuration(input: string | number): number {

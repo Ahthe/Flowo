@@ -3,7 +3,7 @@ import { SupabaseService } from '../supabase/supabase.service';
 import { UpsertTaskDto } from './dto/task.dto';
 import { LogProgressDto } from './dto/log-progress.dto';
 import { PreferencesDto } from './dto/preferences.dto';
-import { Task, UserPreferences } from './types';
+import { Task, UserPreferences, TaskChunk, TaskInstance, TaskHistory } from './types';
 
 @Injectable()
 export class TasksService {
@@ -13,7 +13,7 @@ export class TasksService {
     return this.supabase.getUserClient(token);
   }
 
-async findAll(token: string, userId: string) {
+  async findAll(token: string, userId: string): Promise<Task[]> {
     const { data: tasksData, error } = await this.getClient(token)
       .from('tasks')
       .select(`*, chunks (*), progress_logs (*), task_instances (*)`)
@@ -25,7 +25,7 @@ async findAll(token: string, userId: string) {
       throw new InternalServerErrorException('Failed to retrieve tasks');
     }
 
-    return tasksData.map((t: any) => ({
+    return (tasksData || []).map((t: any) => ({
       id: t.id,
       description: t.description,
       skillLevel: t.skill_level,
@@ -47,6 +47,12 @@ async findAll(token: string, userId: string) {
         duration: c.duration,
         completed: c.completed,
       })),
+      history: (t.progress_logs || []).map((l: any) => ({
+        date: l.created_at,
+        startTime: l.start_time,
+        endTime: l.end_time,
+        durationSeconds: l.duration_seconds,
+      })),
       instances: (t.task_instances || []).map((inst: any) => ({
         id: inst.id,
         taskId: inst.task_id,
@@ -54,12 +60,7 @@ async findAll(token: string, userId: string) {
         end: inst.end_time,
         status: inst.status,
         actualDurationSeconds: inst.actual_duration_seconds,
-      })),
-      history: (t.progress_logs || []).map((l: any) => ({
-        date: l.created_at,
-        startTime: l.start_time,
-        endTime: l.end_time,
-        durationSeconds: l.duration_seconds,
+        isPinned: inst.is_pinned || false,
       })),
     }));
   }
@@ -76,10 +77,10 @@ async findAll(token: string, userId: string) {
       estimated_time: dto.estimatedTime,
       status: dto.status,
       total_time_seconds: dto.totalTimeSeconds ?? dto.timeSpent ?? 0,
-      scheduled_start: dto.scheduledStart ?? null,
-      scheduled_end: dto.scheduledEnd ?? null,
-      predicted_satisfaction: dto.predictedSatisfaction ?? null,
-      actual_satisfaction: dto.actualSatisfaction ?? null,
+      scheduled_start: dto.scheduledStart,
+      scheduled_end: dto.scheduledEnd,
+      predicted_satisfaction: dto.predictedSatisfaction,
+      actual_satisfaction: dto.actualSatisfaction,
       target_sessions_per_day: dto.targetSessionsPerDay ?? 1,
       min_spacing_minutes: dto.minSpacingMinutes ?? 60,
     };
@@ -199,6 +200,61 @@ async findAll(token: string, userId: string) {
     return { success: true };
   }
 
+  async removeInstance(token: string, userId: string, instanceId: string) {
+    const client = this.getClient(token);
+    
+    if (instanceId.startsWith('legacy-')) {
+      const taskId = instanceId.replace('legacy-', '');
+      const { error } = await client
+        .from('tasks')
+        .update({ scheduled_start: null, scheduled_end: null })
+        .eq('id', taskId)
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error('Legacy instance remove error:', error.message);
+        throw new InternalServerErrorException('Failed to remove legacy instance');
+      }
+      return { success: true };
+    }
+
+    const { error } = await client
+      .from('task_instances')
+      .delete()
+      .eq('id', instanceId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Instance delete error:', error.message);
+      throw new InternalServerErrorException('Failed to remove instance');
+    }
+    return { success: true };
+  }
+
+  async createInstance(token: string, userId: string, payload: { taskId: string, start: string, end: string, isPinned: boolean }) {
+    const client = this.getClient(token);
+    
+    const { data, error } = await client
+      .from('task_instances')
+      .insert({
+        user_id: userId,
+        task_id: payload.taskId,
+        start_time: payload.start,
+        end_time: payload.end,
+        status: 'scheduled',
+        is_pinned: payload.isPinned,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Create instance error:', error.message);
+      throw new InternalServerErrorException('Failed to create instance');
+    }
+    
+    return { success: true, instanceId: data.id };
+  }
+
   async getPreferences(token: string, userId: string) {
     const { data, error } = await this.getClient(token)
       .from('user_preferences')
@@ -251,6 +307,20 @@ async findAll(token: string, userId: string) {
     }
   }
 
+  async pinInstance(token: string, userId: string, instanceId: string, isPinned: boolean) {
+    const { error } = await this.getClient(token)
+      .from('task_instances')
+      .update({ is_pinned: isPinned })
+      .eq('id', instanceId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Pin instance error:', error.message);
+      throw new InternalServerErrorException('Failed to pin instance');
+    }
+    return { success: true };
+  }
+
   async clearFutureScheduledInstances(token: string, userId: string, taskId?: string) {
     const now = new Date().toISOString();
     let query = this.getClient(token)
@@ -258,6 +328,7 @@ async findAll(token: string, userId: string) {
       .delete()
       .eq('user_id', userId)
       .eq('status', 'scheduled')
+      .eq('is_pinned', false)
       .gte('start_time', now);
 
     if (taskId) {
@@ -268,7 +339,11 @@ async findAll(token: string, userId: string) {
 
     if (error) {
       console.error('Clear instances error:', error.message);
-      throw new InternalServerErrorException('Failed to clear old schedule');
+      if (error.code === '42703') {
+        console.warn('is_pinned column does not exist. Please run migration 007.');
+      } else {
+        throw new InternalServerErrorException('Failed to clear old schedule');
+      }
     }
   }
 

@@ -63,6 +63,36 @@ export const api = {
     await assertOk(res, "Failed to delete chunk");
   },
 
+  async createInstance(payload: { taskId: string, start: string, end: string, isPinned: boolean }) {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/instance`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+    await assertOk(res, "Failed to create instance");
+    return res.json();
+  },
+
+  async deleteInstance(instanceId: string) {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/instance/${instanceId}`, {
+      method: "DELETE",
+      headers,
+    });
+    await assertOk(res, "Failed to remove instance");
+  },
+
+  async pinInstance(instanceId: string, isPinned: boolean) {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/instance/${instanceId}/pin`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ isPinned }),
+    });
+    await assertOk(res, "Failed to pin instance");
+  },
+
   async createProgressLog(taskId: string, log: TaskHistory) {
     const headers = await getHeaders();
     const res = await fetch(`${API_URL}/tasks/log/${taskId}`, {

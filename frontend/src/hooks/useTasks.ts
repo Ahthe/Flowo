@@ -228,6 +228,74 @@ export const useTasks = (session: Session | null) => {
     await updateTask(taskId, { chunks: newChunks });
   }, [updateTask]);
 
+  const removeInstance = useCallback(async (taskId: string, instanceId: string) => {
+    const task = tasksRef.current.find(t => t.id === taskId);
+    if (!task) return;
+
+    if (session) {
+      try {
+        await api.deleteInstance(instanceId);
+        
+        setTasks(prev => prev.map(t => {
+          if (t.id === taskId) {
+            if (instanceId.startsWith('legacy-')) {
+              return { ...t, scheduledStart: undefined, scheduledEnd: undefined };
+            } else if (t.instances) {
+              return { ...t, instances: t.instances.filter(i => i.id !== instanceId) };
+            }
+          }
+          return t;
+        }));
+        showToast("Removed from schedule.", "info");
+      } catch (e) {
+        console.error("Remove instance error:", e);
+        showToast("Failed to remove from schedule.", "error");
+      }
+    }
+  }, [session, showToast]);
+
+  const addPinnedInstance = useCallback(async (taskId: string, date: Date, hour: number) => {
+    const task = tasksRef.current.find(t => t.id === taskId);
+    if (!task) return;
+
+    const durationMin = parseInt(task.estimatedTime.replace("m", "")) || 60;
+    const start = new Date(date);
+    start.setHours(hour, 0, 0, 0);
+    const end = new Date(start.getTime() + durationMin * 60000);
+
+    const payload = {
+      taskId,
+      start: start.toISOString(),
+      end: end.toISOString(),
+      isPinned: true
+    };
+
+    if (session) {
+      try {
+        const result = await api.createInstance(payload);
+        
+        // Optimistically add to UI
+        setTasks(prev => prev.map(t => {
+          if (t.id === taskId) {
+            const newInst = {
+              id: result.instanceId,
+              start: payload.start,
+              end: payload.end,
+              status: 'scheduled' as any,
+              isPinned: true
+            };
+            return { ...t, instances: [...(t.instances || []), newInst] };
+          }
+          return t;
+        }));
+        showToast("Task scheduled successfully.", "success");
+      } catch (e) {
+        console.error("Add instance error:", e);
+        showToast("Failed to schedule task.", "error");
+      }
+    }
+  }, [session, showToast]);
+
   const addChunk = useCallback(async (taskId: string, name: string, duration: number) => {
     const task = tasksRef.current.find(t => t.id === taskId);
     if (!task) return;
@@ -303,6 +371,8 @@ export const useTasks = (session: Session | null) => {
     updateChunk,
     addChunk,
     deleteChunk,
+    removeInstance,
+    addPinnedInstance,
     fetchTasks
   };
 };

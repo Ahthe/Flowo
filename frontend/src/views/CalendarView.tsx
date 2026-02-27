@@ -23,6 +23,7 @@ interface CalendarViewProps {
   onTaskClick?: (task: Task) => void;
   onScheduleTask?: (taskId: string, date: Date, hour: number) => void;
   onDeleteTask?: (taskId: string) => void;
+  onRemoveInstance?: (taskId: string, instanceId: string) => void;
   onTabChange?: (tab: any) => void;
 }
 
@@ -41,7 +42,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   onAddTaskAtTime,
   onTaskClick,
   onScheduleTask,
-  onDeleteTask,
+  onRemoveInstance,
   onTabChange,
 }) => {
   const { playClick, playTabs, playPop } = useSound();
@@ -155,41 +156,46 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const positionedInstances = useMemo(() => {
     if (scheduledInstances.length === 0) return [];
 
-    const clusters: any[][] = [];
+    // 1) Pre-parse all dates once — avoids repeated new Date() in inner loops
+    const startTimes = new Map<string, number>();
+    const endTimes = new Map<string, number>();
     for (const inst of scheduledInstances) {
-      const iStart = new Date(inst.start).getTime();
-      const lastCluster = clusters[clusters.length - 1];
+      startTimes.set(inst.instanceId, new Date(inst.start).getTime());
+      endTimes.set(inst.instanceId, new Date(inst.end).getTime());
+    }
 
-      if (!lastCluster) {
+    // 2) Build clusters — track running max-end instead of re-scanning
+    const clusters: any[][] = [];
+    let clusterMaxEnd = 0;
+
+    for (const inst of scheduledInstances) {
+      const iStart = startTimes.get(inst.instanceId)!;
+      const iEnd = endTimes.get(inst.instanceId)!;
+
+      if (clusters.length === 0 || iStart >= clusterMaxEnd) {
         clusters.push([inst]);
-        continue;
-      }
-
-      const clusterEnd = Math.max(
-        ...lastCluster.map((ci) => new Date(ci.end).getTime()),
-      );
-      
-      if (iStart < clusterEnd) {
-        lastCluster.push(inst);
+        clusterMaxEnd = iEnd;
       } else {
-        clusters.push([inst]);
+        clusters[clusters.length - 1].push(inst);
+        if (iEnd > clusterMaxEnd) clusterMaxEnd = iEnd;
       }
     }
 
+    // 3) Assign columns within each cluster
     const result: (any & { _col: number; _maxCol: number })[] = [];
 
     for (const cluster of clusters) {
-      const columns: any[][] = [];
-      const instCols: Map<string, number> = new Map();
+      // Track end-time of last item placed in each column
+      const colEnds: number[] = [];
+      const instCols = new Map<string, number>();
 
       for (const inst of cluster) {
-        const iStart = new Date(inst.start).getTime();
+        const iStart = startTimes.get(inst.instanceId)!;
         let placed = false;
 
-        for (let ci = 0; ci < columns.length; ci++) {
-          const lastInCol = columns[ci][columns[ci].length - 1];
-          if (iStart >= new Date(lastInCol.end).getTime()) {
-            columns[ci].push(inst);
+        for (let ci = 0; ci < colEnds.length; ci++) {
+          if (iStart >= colEnds[ci]) {
+            colEnds[ci] = endTimes.get(inst.instanceId)!;
             instCols.set(inst.instanceId, ci);
             placed = true;
             break;
@@ -197,14 +203,17 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         }
 
         if (!placed) {
-          columns.push([inst]);
-          instCols.set(inst.instanceId, columns.length - 1);
+          colEnds.push(endTimes.get(inst.instanceId)!);
+          instCols.set(inst.instanceId, colEnds.length - 1);
         }
       }
 
-      const maxCol = columns.length;
+      const maxCol = colEnds.length;
       for (const inst of cluster) {
-        result.push({ ...inst, _col: instCols.get(inst.instanceId) || 0, _maxCol: maxCol });
+        result.push(Object.assign({}, inst, {
+          _col: instCols.get(inst.instanceId) || 0,
+          _maxCol: maxCol,
+        }));
       }
     }
 
@@ -549,7 +558,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onDeleteTask?.(inst.id);
+                                  onRemoveInstance?.(inst.id, inst.instanceId);
                                 }}
                                 className="opacity-0 group-hover/task:opacity-100 p-0.5 hover:text-highlighter-pink transition-opacity shrink-0"
                               >
@@ -674,7 +683,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onDeleteTask?.(inst.id);
+                                onRemoveInstance?.(inst.id, inst.instanceId);
                               }}
                               className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-highlighter-pink transition-opacity"
                             >
