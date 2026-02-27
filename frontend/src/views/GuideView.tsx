@@ -12,7 +12,6 @@ import {
   Moon,
   Sun,
   Archive,
-  MousePointer2,
   CheckCircle2,
   Quote,
   Activity,
