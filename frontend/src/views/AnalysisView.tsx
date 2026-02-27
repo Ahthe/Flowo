@@ -306,7 +306,6 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
             </span>
           </div>
           <div className="h-72 md:h-80 sketch-border bg-white p-4 md:p-5 relative overflow-hidden flex flex-col">
-            {/* Subtle grid background */}
             <div
               className="absolute inset-0 opacity-[0.03] pointer-events-none"
               style={{
@@ -327,69 +326,73 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
                 </p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart
-                  data={activityByHour}
-                  margin={{ top: 15, right: 5, left: -25, bottom: 0 }}
-                >
-                  <XAxis
-                    dataKey="hour"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fontFamily: "Patrick Hand",
-                      fontSize: 10,
-                      fill: "#1a1a1a55",
-                    }}
-                    interval={2}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fontFamily: "Courier Prime",
-                      fontSize: 9,
-                      fill: "#1a1a1a33",
-                    }}
-                    unit="m"
-                  />
-                  <Tooltip
-                    cursor={{ fill: "var(--color-ink)", opacity: 0.03 }}
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-highlighter-yellow p-3 sketch-border shadow-xl transform -rotate-1">
-                            <p className="font-marker text-lg leading-none mb-1">
-                              {data.focusMinutes} MIN
-                            </p>
-                            <p className="font-sketch text-[10px] uppercase opacity-60 font-black">
-                              {data.hour} — {data.energyLevel}% energy
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="focusMinutes" shape={<EnergyBar />}>
-                    {activityByHour.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={
-                          entry.energyLevel >= 80
-                            ? "var(--color-highlighter-pink)"
-                            : entry.energyLevel >= 40
-                              ? "var(--color-highlighter-yellow)"
-                              : entry.focusMinutes > 0
-                                ? "#c4b5a0"
-                                : "#e8e4de"
-                        }
+              <div className="flex-1 relative w-full min-h-[250px]">
+                <div className="absolute inset-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={activityByHour}
+                      margin={{ top: 15, right: 5, left: -25, bottom: 0 }}
+                    >
+                      <XAxis
+                        dataKey="hour"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fontFamily: "Patrick Hand",
+                          fontSize: 10,
+                          fill: "#1a1a1a55",
+                        }}
+                        interval={2}
                       />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fontFamily: "Courier Prime",
+                          fontSize: 9,
+                          fill: "#1a1a1a33",
+                        }}
+                        unit="m"
+                      />
+                      <Tooltip
+                        cursor={{ fill: "var(--color-ink)", opacity: 0.03 }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-highlighter-yellow p-3 sketch-border shadow-xl transform -rotate-1">
+                                <p className="font-marker text-lg leading-none mb-1">
+                                  {data.focusMinutes} MIN
+                                </p>
+                                <p className="font-sketch text-[10px] uppercase opacity-60 font-black">
+                                  {data.hour} — {data.energyLevel}% energy
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="focusMinutes" shape={<EnergyBar />}>
+                        {activityByHour.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              entry.energyLevel >= 80
+                                ? "var(--color-highlighter-pink)"
+                                : entry.energyLevel >= 40
+                                  ? "var(--color-highlighter-yellow)"
+                                  : entry.focusMinutes > 0
+                                    ? "#c4b5a0"
+                                    : "#e8e4de"
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             )}
           </div>
           {hasLogData && (
@@ -429,99 +432,103 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
                 </p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <ComposedChart
-                  data={completionTimeline}
-                  margin={{ top: 15, right: 15, left: -25, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient
-                      id="gradCumulative"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
+              <div className="flex-1 relative w-full min-h-[250px]">
+                <div className="absolute inset-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart
+                      data={completionTimeline}
+                      margin={{ top: 15, right: 15, left: -25, bottom: 0 }}
                     >
-                      <stop
-                        offset="5%"
-                        stopColor="var(--color-ink)"
-                        stopOpacity={0.1}
+                      <defs>
+                        <linearGradient
+                          id="gradCumulative"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="var(--color-ink)"
+                            stopOpacity={0.1}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="var(--color-ink)"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="4 4" stroke="#00000008" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fontFamily: "Patrick Hand",
+                          fontSize: 12,
+                          fill: "#1a1a1a55",
+                        }}
                       />
-                      <stop
-                        offset="95%"
-                        stopColor="var(--color-ink)"
-                        stopOpacity={0}
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fontFamily: "Courier Prime",
+                          fontSize: 9,
+                          fill: "#1a1a1a33",
+                        }}
+                        allowDecimals={false}
                       />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#00000008" />
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fontFamily: "Patrick Hand",
-                      fontSize: 12,
-                      fill: "#1a1a1a55",
-                    }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fontFamily: "Courier Prime",
-                      fontSize: 9,
-                      fill: "#1a1a1a33",
-                    }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-white p-3 sketch-border shadow-2xl border-double border-4 transform rotate-1">
-                            <div className="font-sketch text-[9px] uppercase opacity-40 mb-1">
-                              {payload[0]?.payload.date}
-                            </div>
-                            <p className="font-marker text-2xl leading-none text-highlighter-pink">
-                              {payload[0]?.payload.completed}{" "}
-                              <span className="text-sm text-ink">
-                                completed
-                              </span>
-                            </p>
-                            <p className="font-hand text-xs mt-1 opacity-50">
-                              {payload[0]?.payload.cumulative} total so far
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="cumulative"
-                    stroke="var(--color-ink)"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#gradCumulative)"
-                    name="Cumulative"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="completed"
-                    stroke="var(--color-highlighter-pink)"
-                    strokeWidth={4}
-                    dot={{
-                      fill: "white",
-                      stroke: "var(--color-highlighter-pink)",
-                      strokeWidth: 2,
-                      r: 4,
-                    }}
-                    name="Daily Count"
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-white p-3 sketch-border shadow-2xl border-double border-4 transform rotate-1">
+                                <div className="font-sketch text-[9px] uppercase opacity-40 mb-1">
+                                  {payload[0]?.payload.date}
+                                </div>
+                                <p className="font-marker text-2xl leading-none text-highlighter-pink">
+                                  {payload[0]?.payload.completed}{" "}
+                                  <span className="text-sm text-ink">
+                                    completed
+                                  </span>
+                                </p>
+                                <p className="font-hand text-xs mt-1 opacity-50">
+                                  {payload[0]?.payload.cumulative} total so far
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="cumulative"
+                        stroke="var(--color-ink)"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#gradCumulative)"
+                        name="Cumulative"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="completed"
+                        stroke="var(--color-highlighter-pink)"
+                        strokeWidth={4}
+                        dot={{
+                          fill: "white",
+                          stroke: "var(--color-highlighter-pink)",
+                          strokeWidth: 2,
+                          r: 4,
+                        }}
+                        name="Daily Count"
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             )}
           </div>
         </div>
