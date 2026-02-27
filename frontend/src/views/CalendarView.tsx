@@ -156,7 +156,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const positionedInstances = useMemo(() => {
     if (scheduledInstances.length === 0) return [];
 
-    // 1) Pre-parse all dates once — avoids repeated new Date() in inner loops
     const startTimes = new Map<string, number>();
     const endTimes = new Map<string, number>();
     for (const inst of scheduledInstances) {
@@ -164,7 +163,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       endTimes.set(inst.instanceId, new Date(inst.end).getTime());
     }
 
-    // 2) Build clusters — track running max-end instead of re-scanning
     const clusters: any[][] = [];
     let clusterMaxEnd = 0;
 
@@ -181,11 +179,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       }
     }
 
-    // 3) Assign columns within each cluster
     const result: (any & { _col: number; _maxCol: number })[] = [];
 
     for (const cluster of clusters) {
-      // Track end-time of last item placed in each column
       const colEnds: number[] = [];
       const instCols = new Map<string, number>();
 
@@ -220,14 +216,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     return result;
   }, [scheduledInstances]);
 
-  // Calculate pixel position for an instance based on its time + the hourSequence
   const getTaskStyle = useCallback(
     (inst: any & { _col: number; _maxCol: number }): React.CSSProperties => {
       const start = new Date(inst.start);
       const end = new Date(inst.end);
       const instStartHour = start.getHours();
 
-      // Find this hour's index in our sequence
       let seqIndex = hourSequence.indexOf(instStartHour);
       if (seqIndex === -1) {
         const seqStart = hourSequence[0];
@@ -247,7 +241,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       const col = inst._col || 0;
       const colWidth = 100 / totalCols;
       const left = col * colWidth;
-      // Always have a small gap for visual "card" look
       const gap = 2;
 
       return {
