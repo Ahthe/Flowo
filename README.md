@@ -1,14 +1,25 @@
-# Vellum
+<h1 align="center" style="font-size: 60px;">Vellum</h1>
 
-Vellum is a comprehensive productivity system designed to help you plan, execute, and analyze your work. It is built for students, researchers, and professionals who need more than a simple to-do list.
+<p align="center">
+  🏆 <strong>Second Place Winner — Build4Students Hackathon 2026</strong>
+</p>
 
-The name Vellum refers to the high-quality parchment used for historical manuscripts. This choice reflects the application's purpose: to serve as a premium, durable workspace for your most significant projects.
+<p align="center">
+  <img src="https://github.com/emanalytic/Vellum/blob/main/image.png" width="700" alt="Vellum Preview"/>
+</p>
 
-![Alt text](https://github.com/emanalytic/Vellum/blob/main/image.png)
+<p align="center">
+  🔗 <a href="https://www.vellum.foo/)">Try it out here</a> |
+  💜 <a href="https://devpost.com/software/vellum-tgv241">Devpost Submission</a>
+</p>
+
+It is a productivity application designed to help you plan, execute, and analyze your work. It is built for students and who need more than a simple to-do list.
+
+*The name Vellum refers to the high-quality parchment used for historical manuscripts. This choice reflects the application's purpose: to serve as a premium, durable workspace for your most significant projects.* 🐇
 
 ## Overview
 
-Traditional productivity tools often fail because they treat all tasks as equal and ignore the user's energy levels. Vellum addresses this by introducing an intelligent layer between your task list and your calendar. It understands that productivity is limited not just by time, but by mental energy.
+Traditional productivity tools often fail because they treat all tasks as equal and ignore the user's energy levels. So it addresses this by introducing an intelligent layer between your task list and your calendar. It understands that productivity is limited not just by time, but by mental energy.
 
 The system helps you by:
 
@@ -20,9 +31,9 @@ The system helps you by:
 
 ### Intelligent Task Management
 
-When you add a complex task, Vellum can automatically analyze it and break it down into smaller, actionable sub-tasks. It estimates the difficulty and time required for each step, allowing you to start working immediately without being overwhelmed by the scale of the project.
+When you add a complex task, it  can automatically analyze it and break it down into smaller, actionable sub-tasks. It estimates the difficulty and time required for each step, allowing you to start working immediately without being overwhelmed by the scale of the project.
 
-### Smart Scheduling
+### Smart Scheduling 
 
 The application takes your list of tasks and automatically arranges them into your daily schedule. It respects your defined working hours and avoids scheduling conflicting appointments. The interface supports drag-and-drop adjustments, giving you full control over the final plan.
 
@@ -38,9 +49,9 @@ The application provides detailed insights into your work patterns:
 - **Velocity Tracking**: Monitors your completion rate to help you predict future performance.
 - **Energy Mapping**: identifies your peak productivity hours based on historical data.
 
-## deeply Integrated Scheduler
+## Integrated Scheduler
 
-The core innovation in Vellum is its scheduling engine, which automates the planning process. This system follows a specific logic to ensure your day is balanced and productive.
+The core part of Vellum is its scheduling engine, which automates the planning process. This system follows a specific logic to ensure your day is balanced and productive.
 
 ### 1. Prioritization
 
@@ -76,7 +87,6 @@ To prevent burnout, the system enforces spacing between intensive tasks. It avoi
 
 - **NestJS**: A progressive Node.js framework for building efficient server-side applications.
 - **Supabase**: Provides the PostgreSQL database and authentication services.
-- **OpenAI & Llama 3**: Powers the artificial intelligence features for task analysis and breakdown.
 
 ## Getting Started
 
@@ -86,7 +96,7 @@ To run Vellum locally, you will need:
 
 - Node.js (version 18 or higher)
 - A Supabase account and project
-- An OpenAI API key
+- LLM API key (i've used groq)
 
 ### Installation Instructions
 
