@@ -4,7 +4,8 @@ export type TaskStatus =
   | "running"
   | "paused"
   | "completed"
-  | "archived";
+  | "archived"
+  | "overdue";
 
 export interface TaskChunk {
   id: string;
@@ -28,7 +29,7 @@ export interface Task {
   deadline: string;
   estimatedTime: string;
   status: TaskStatus;
-  timeSpent: number;
+
   chunks?: TaskChunk[];
   history: TaskHistory[];
   totalTimeSeconds: number;

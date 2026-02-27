@@ -23,7 +23,8 @@ export class ClassifyTaskDto {
   task_description: string;
 
   @IsEnum(SkillLevel, {
-    message: 'Skill level must be one of: total_novice, beginner, intermediate, advanced, master',
+    message:
+      'Skill level must be one of: total_novice, beginner, intermediate, advanced, master',
   })
   @IsOptional()
   skill_level?: SkillLevel = SkillLevel.INTERMEDIATE;

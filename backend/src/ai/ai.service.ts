@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Groq from 'groq-sdk';
 import { ClassifyTaskDto } from './dto/classify-task.dto';
@@ -28,23 +33,23 @@ export class AiService {
       const userClient = this.supabaseService.getUserClient(token);
 
       const systemPrompt = `You are a task time-behavior classifier.
-Your Goal: Map natural-language tasks to workload patterns and break them down into concrete, actionable chunks (max 5).
-Output: Strict JSON matching the schema below. No chatter.
+        Your Goal: Map natural-language tasks to workload patterns and break them down into concrete, actionable chunks (max 5).
+        Output: Strict JSON matching the schema below. No chatter.
 
-Schema:
-{
-  "suggested_chunks": [
-    { "title": "string", "description": "string", "estimated_duration_min": integer }
-  ]
-}
+        Schema:
+        {
+          "suggested_chunks": [
+            { "title": "string", "description": "string", "estimated_duration_min": integer }
+          ]
+        }
 
-Scale calibration for skill_level '${dto.skill_level}':
-- beginner/total_novice: Multiply generic durations by 1.5x. Provide more granular chunks.
-- intermediate/average: Baselines.
-- advanced/master/expert: Multiply generic durations by 0.7x. Chunks can be broader.
+        Scale calibration for skill_level '${dto.skill_level}':
+        - beginner/total_novice: Multiply generic durations by 1.5x. Provide more granular chunks.
+        - intermediate/average: Baselines.
+        - advanced/master/expert: Multiply generic durations by 0.7x. Chunks can be broader.
 
-Constraints:
-- suggested_chunks: Min 1, Max 5.`;
+        Constraints:
+        - suggested_chunks: Min 1, Max 5.`;
 
       const response = await this.groq.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
@@ -65,8 +70,10 @@ Constraints:
 
       let rawData;
       try {
-        // Strip markdown code block formatting if present just in case
-        const jsonContent = content.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const jsonContent = content
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim();
         rawData = JSON.parse(jsonContent);
       } catch (parseError) {
         console.error('Failed to parse AI output as JSON:', content);
@@ -80,9 +87,10 @@ Constraints:
         rawData.suggested_chunks = rawData.suggested_chunks.slice(0, 5);
       }
 
-      // 2. Record Usage Atomically
-      const { error: rpcError } = await userClient.rpc('increment_ai_usage', { uid: userId });
-      
+      const { error: rpcError } = await userClient.rpc('increment_ai_usage', {
+        uid: userId,
+      });
+
       if (rpcError) {
         if (rpcError.message.includes('DAILY_LIMIT_REACHED')) {
           throw new HttpException(
@@ -91,13 +99,15 @@ Constraints:
           );
         }
         console.error('Failed to increment usage:', rpcError);
-        throw new InternalServerErrorException('Failed to process AI task limit');
+        throw new InternalServerErrorException(
+          'Failed to process AI task limit',
+        );
       }
 
       return rawData as TaskClassificationDto;
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
-      
+
       console.error('AI Classification Error:', error.message);
       throw new InternalServerErrorException(
         'AI classification service is temporarily unavailable. Please try again.',

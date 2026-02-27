@@ -91,7 +91,6 @@ export const useTasks = (session: Session | null) => {
         deadline: new Date(deck.deadline).toISOString(),
         estimatedTime: `${deck.estimatedTime}m`,
         status: "idle",
-        timeSpent: 0,
         totalTimeSeconds: 0,
         chunks: chunks,
         history: [],

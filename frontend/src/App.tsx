@@ -105,6 +105,18 @@ function App() {
     [tasks]
   );
 
+  const overdueCount = useMemo(
+    () => tasks.filter(t => t.status === 'overdue').length,
+    [tasks]
+  );
+
+  useEffect(() => {
+    if (overdueCount > 0) {
+      showToast(`You have ${overdueCount} overdue task${overdueCount > 1 ? 's' : ''}!`, "error");
+    }
+  }, [overdueCount === 0]); // Toast when first detected or when it change from 0 to something
+
+
   useEffect(() => {
     const interval = setInterval(() => {
       setTasks((prevTasks) => {
@@ -121,7 +133,7 @@ function App() {
 
         return prevTasks.map((t) =>
           t.id === runningTask.id
-            ? { ...t, timeSpent: newTotal, totalTimeSeconds: newTotal }
+            ? { ...t, totalTimeSeconds: newTotal }
             : t,
         );
       });
@@ -298,6 +310,7 @@ function App() {
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         onLogout={() => supabase.auth.signOut()}
         onSettings={() => setIsSettingsOpen(true)}
+        overdueCount={overdueCount}
       />
 
       <SettingsModal

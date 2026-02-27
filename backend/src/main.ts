@@ -8,7 +8,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  
+
   try {
     const app = await NestFactory.create(AppModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
@@ -24,30 +24,33 @@ async function bootstrap() {
       optionsSuccessStatus: 204,
     });
 
-    app.use(helmet({
-      crossOriginResourcePolicy: { policy: 'cross-origin' },
-      crossOriginOpenerPolicy: { policy: 'unsafe-none' },
-    }));
+    app.use(
+      helmet({
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+        crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+      }),
+    );
     app.use(compression());
-    
+
     app.enableShutdownHooks();
-    
-    app.useGlobalPipes(new ValidationPipe({ 
-      whitelist: true, 
-      transform: true,
-      forbidNonWhitelisted: true,
-    }));
+
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
 
     app.use(json({ limit: '10mb' }));
     app.use(urlencoded({ extended: true, limit: '10mb' }));
-        
+
     const port = process.env.PORT ?? 3000;
-    
+
     await app.listen(port, '0.0.0.0');
-    
+
     logger.log(`Vellum Backend is running on port ${port}`);
     logger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    
   } catch (error) {
     logger.error('Fatal error during application startup', error);
     process.exit(1);
@@ -58,4 +61,3 @@ bootstrap().catch((error) => {
   console.error('UNHANDLED BOOTSTRAP ERROR:', error);
   process.exit(1);
 });
-

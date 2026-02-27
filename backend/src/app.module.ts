@@ -14,8 +14,8 @@ import { AppController } from './app.controller';
     AuthModule,
     AiModule,
     TasksModule,
-    SchedulerModule
+    SchedulerModule,
   ],
-  controllers: [AppController]
+  controllers: [AppController],
 })
 export class AppModule {}

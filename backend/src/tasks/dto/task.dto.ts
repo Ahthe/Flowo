@@ -18,6 +18,7 @@ export enum TaskStatus {
   PAUSED = 'paused',
   COMPLETED = 'completed',
   ARCHIVED = 'archived',
+  OVERDUE = 'overdue',
 }
 
 export enum Priority {
@@ -109,10 +110,6 @@ export class UpsertTaskDto {
   @Min(0)
   @IsOptional()
   actualSatisfaction?: number;
-
-  @IsInt()
-  @IsOptional()
-  timeSpent?: number;
 
   @IsArray()
   @IsOptional()

@@ -16,8 +16,7 @@ const FloatingTimer: React.FC<FloatingTimerProps> = ({ task, onUpdate }) => {
 
   const radius = 45;
   const circumference = 2 * Math.PI * radius;
-  // Progress shows current minute for visual interest, using total time to persist across reloads
-  const activeTime = task ? (task.totalTimeSeconds || task.timeSpent || 0) : 0;
+  const activeTime = task ? (task.totalTimeSeconds || 0) : 0;
   const progress = (activeTime % 60) / 60; 
   const strokeDashoffset = circumference - progress * circumference;
 

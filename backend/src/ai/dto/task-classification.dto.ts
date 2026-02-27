@@ -32,5 +32,4 @@ export class TaskClassificationDto {
   @ValidateNested({ each: true })
   @Type(() => TaskChunkDto)
   suggested_chunks: TaskChunkDto[];
-
 }

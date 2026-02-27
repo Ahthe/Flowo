@@ -43,10 +43,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
     high: <AlertCircle size={14} className="text-highlighter-pink fill-highlighter-pink" />
   };
 
+  const isOverdue = task.status === 'overdue' || (
+    task.deadline && 
+    new Date(task.deadline).getTime() < Date.now() && 
+    task.status !== 'completed' && 
+    task.status !== 'archived'
+  );
+
   return (
     <div 
       onClick={() => onClick?.(task)}
-      className={`tape-effect sketch-border p-5 bg-white transform transition-all duration-300 hover:rotate-0 hover:scale-105 max-w-sm cursor-pointer ${task.id.length % 2 === 0 ? 'rotate-1' : '-rotate-1'} ${task.status === 'completed' ? 'opacity-50' : ''} ${priorityStyles[task.priority]}`}
+      className={`tape-effect sketch-border p-5 bg-white transform transition-all duration-300 hover:rotate-0 hover:scale-105 max-w-sm cursor-pointer ${task.id.length % 2 === 0 ? 'rotate-1' : '-rotate-1'} ${task.status === 'completed' ? 'opacity-50' : ''} ${isOverdue ? 'border-4 border-highlighter-pink/80 bg-red-50' : priorityStyles[task.priority]}`}
     >
       <div className="flex justify-between items-start mb-2">
         <div className="flex-1 mr-2">
@@ -87,15 +94,42 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
       </div>
 
       <div className="mb-4 space-y-2">
+        {isOverdue && (
+          <div className="mb-2">
+            <span className="font-marker text-sm bg-highlighter-pink text-white px-2 py-0.5 shadow-sm transform -rotate-2 inline-block">
+              ! OVERDUE
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
            <BarChart3 size={12} className="opacity-40" />
            <span className="font-sketch text-xs uppercase opacity-60">{task.priority}</span>  
         </div>
         
         <div className="flex items-center gap-4 opacity-70 font-sketch text-xs mt-2">
-          <div className="flex items-center gap-1">
-            <span className="underline decoration-highlighter-pink">Due:</span>
-            <span>{new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+          <div className="flex flex-col items-start gap-1">
+            <div className="flex items-center gap-1">
+              <span className="underline decoration-highlighter-pink">Due:</span>
+              <span className={isOverdue ? "text-highlighter-pink font-bold" : ""}>{new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+            </div>
+            {isOverdue && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playPop();
+                  const newDeadline = new Date();
+                  newDeadline.setDate(newDeadline.getDate() + 1);
+                  onUpdate(task.id, { 
+                    deadline: newDeadline.toISOString(),
+                    status: 'idle' 
+                  });
+                }}
+                className="text-highlighter-pink underline hover:text-ink transition-colors mt-1"
+                title="Reschedule to tomorrow"
+              >
+                Reschedule (+1 Day)
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-1">
             <span>Est:</span>
@@ -188,7 +222,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
         <div className="text-right">
           <span className="font-sketch text-[10px] uppercase opacity-40 block tracking-widest leading-none">Record</span>
           <div className="font-type text-lg tracking-tight">
-            {formatTime(task.totalTimeSeconds || task.timeSpent || 0)}
+            {formatTime(task.totalTimeSeconds || 0)}
           </div>
         </div>
       </div>

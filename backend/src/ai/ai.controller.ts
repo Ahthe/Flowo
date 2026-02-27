@@ -13,7 +13,7 @@ export class AiController {
     const userId = req.user.id;
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(' ')[1];
-    
+
     return this.aiService.classifyTask(dto, userId, token);
   }
 }

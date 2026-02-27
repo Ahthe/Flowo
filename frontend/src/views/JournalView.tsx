@@ -68,9 +68,13 @@ const JournalView: React.FC<JournalViewProps> = ({
     }
   };
 
-  const pendingTasks = tasks.filter(
-    (t) => t.status !== "completed" && t.status !== "archived"
-  );
+  const pendingTasks = tasks
+    .filter((t) => t.status !== "completed" && t.status !== "archived")
+    .sort((a, b) => {
+      if (a.status === "overdue" && b.status !== "overdue") return -1;
+      if (a.status !== "overdue" && b.status === "overdue") return 1;
+      return 0;
+    });
 
   return (
     <div className="space-y-12 pb-20">

@@ -3,7 +3,13 @@ import { SupabaseService } from '../supabase/supabase.service';
 import { UpsertTaskDto } from './dto/task.dto';
 import { LogProgressDto } from './dto/log-progress.dto';
 import { PreferencesDto } from './dto/preferences.dto';
-import { Task, UserPreferences, TaskChunk, TaskInstance, TaskHistory } from './types';
+import {
+  Task,
+  UserPreferences,
+  TaskChunk,
+  TaskInstance,
+  TaskHistory,
+} from './types';
 
 @Injectable()
 export class TasksService {
@@ -14,6 +20,8 @@ export class TasksService {
   }
 
   async findAll(token: string, userId: string): Promise<Task[]> {
+    await this.markOverdueTasks(token, userId);
+
     const { data: tasksData, error } = await this.getClient(token)
       .from('tasks')
       .select(`*, chunks (*), progress_logs (*), task_instances (*)`)
@@ -33,7 +41,6 @@ export class TasksService {
       deadline: t.deadline,
       estimatedTime: t.estimated_time,
       status: t.status,
-      timeSpent: t.total_time_seconds || 0,
       totalTimeSeconds: t.total_time_seconds || 0,
       scheduledStart: t.scheduled_start,
       scheduledEnd: t.scheduled_end,
@@ -76,7 +83,7 @@ export class TasksService {
       deadline: dto.deadline,
       estimated_time: dto.estimatedTime,
       status: dto.status,
-      total_time_seconds: dto.totalTimeSeconds ?? dto.timeSpent ?? 0,
+      total_time_seconds: dto.totalTimeSeconds ?? 0,
       scheduled_start: dto.scheduledStart,
       scheduled_end: dto.scheduledEnd,
       predicted_satisfaction: dto.predictedSatisfaction,
@@ -130,14 +137,25 @@ export class TasksService {
     const client = this.getClient(token);
 
     const [instancesResult, logsResult, chunksResult] = await Promise.all([
-      client.from('task_instances').delete().eq('task_id', id).eq('user_id', userId),
-      client.from('progress_logs').delete().eq('task_id', id).eq('user_id', userId),
+      client
+        .from('task_instances')
+        .delete()
+        .eq('task_id', id)
+        .eq('user_id', userId),
+      client
+        .from('progress_logs')
+        .delete()
+        .eq('task_id', id)
+        .eq('user_id', userId),
       client.from('chunks').delete().eq('task_id', id),
     ]);
 
-    if (instancesResult.error) console.error('Delete instances error:', instancesResult.error.message);
-    if (logsResult.error) console.error('Delete logs error:', logsResult.error.message);
-    if (chunksResult.error) console.error('Delete chunks error:', chunksResult.error.message);
+    if (instancesResult.error)
+      console.error('Delete instances error:', instancesResult.error.message);
+    if (logsResult.error)
+      console.error('Delete logs error:', logsResult.error.message);
+    if (chunksResult.error)
+      console.error('Delete chunks error:', chunksResult.error.message);
 
     const { error } = await client
       .from('tasks')
@@ -168,7 +186,9 @@ export class TasksService {
       .single();
 
     if (taskError || !task) {
-      throw new InternalServerErrorException('Task not found or you do not have access');
+      throw new InternalServerErrorException(
+        'Task not found or you do not have access',
+      );
     }
 
     const { error } = await client.from('progress_logs').insert({
@@ -188,10 +208,7 @@ export class TasksService {
 
   async removeChunk(token: string, userId: string, chunkId: string) {
     const client = this.getClient(token);
-    const { error } = await client
-      .from('chunks')
-      .delete()
-      .eq('id', chunkId);
+    const { error } = await client.from('chunks').delete().eq('id', chunkId);
 
     if (error) {
       console.error('Chunk delete error:', error.message);
@@ -202,7 +219,7 @@ export class TasksService {
 
   async removeInstance(token: string, userId: string, instanceId: string) {
     const client = this.getClient(token);
-    
+
     if (instanceId.startsWith('legacy-')) {
       const taskId = instanceId.replace('legacy-', '');
       const { error } = await client
@@ -210,10 +227,12 @@ export class TasksService {
         .update({ scheduled_start: null, scheduled_end: null })
         .eq('id', taskId)
         .eq('user_id', userId);
-        
+
       if (error) {
         console.error('Legacy instance remove error:', error.message);
-        throw new InternalServerErrorException('Failed to remove legacy instance');
+        throw new InternalServerErrorException(
+          'Failed to remove legacy instance',
+        );
       }
       return { success: true };
     }
@@ -231,9 +250,13 @@ export class TasksService {
     return { success: true };
   }
 
-  async createInstance(token: string, userId: string, payload: { taskId: string, start: string, end: string, isPinned: boolean }) {
+  async createInstance(
+    token: string,
+    userId: string,
+    payload: { taskId: string; start: string; end: string; isPinned: boolean },
+  ) {
     const client = this.getClient(token);
-    
+
     const { data, error } = await client
       .from('task_instances')
       .insert({
@@ -251,7 +274,7 @@ export class TasksService {
       console.error('Create instance error:', error.message);
       throw new InternalServerErrorException('Failed to create instance');
     }
-    
+
     return { success: true, instanceId: data.id };
   }
 
@@ -307,7 +330,26 @@ export class TasksService {
     }
   }
 
-  async pinInstance(token: string, userId: string, instanceId: string, isPinned: boolean) {
+  async markOverdueTasks(token: string, userId: string) {
+    const now = new Date().toISOString();
+    const { error } = await this.getClient(token)
+      .from('tasks')
+      .update({ status: 'overdue' })
+      .eq('user_id', userId)
+      .in('status', ['idle', 'running', 'paused'])
+      .lt('deadline', now);
+
+    if (error) {
+      console.error('Mark overdue tasks error:', error.message);
+    }
+  }
+
+  async pinInstance(
+    token: string,
+    userId: string,
+    instanceId: string,
+    isPinned: boolean,
+  ) {
     const { error } = await this.getClient(token)
       .from('task_instances')
       .update({ is_pinned: isPinned })
@@ -321,7 +363,11 @@ export class TasksService {
     return { success: true };
   }
 
-  async clearFutureScheduledInstances(token: string, userId: string, taskId?: string) {
+  async clearFutureScheduledInstances(
+    token: string,
+    userId: string,
+    taskId?: string,
+  ) {
     const now = new Date().toISOString();
     let query = this.getClient(token)
       .from('task_instances')
@@ -340,7 +386,9 @@ export class TasksService {
     if (error) {
       console.error('Clear instances error:', error.message);
       if (error.code === '42703') {
-        console.warn('is_pinned column does not exist. Please run migration 007.');
+        console.warn(
+          'is_pinned column does not exist. Please run migration 007.',
+        );
       } else {
         throw new InternalServerErrorException('Failed to clear old schedule');
       }
@@ -349,13 +397,13 @@ export class TasksService {
 
   async bulkInsertInstances(token: string, userId: string, instances: any[]) {
     if (instances.length === 0) return;
-    
-    const payload = instances.map(inst => ({
+
+    const payload = instances.map((inst) => ({
       user_id: userId,
       task_id: inst.taskId,
       start_time: inst.start,
       end_time: inst.end,
-      status: 'scheduled'
+      status: 'scheduled',
     }));
 
     const { error } = await this.getClient(token)

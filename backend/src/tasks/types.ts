@@ -30,7 +30,6 @@ export interface Task {
   deadline?: string;
   estimatedTime: string;
   status: string;
-  timeSpent: number;
   totalTimeSeconds: number;
   scheduledStart?: string;
   scheduledEnd?: string;

@@ -15,9 +15,10 @@ interface SidebarProps {
   onToggle: () => void;
   onLogout: () => void;
   onSettings: () => void;
+  overdueCount: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen, onToggle, onLogout, onSettings }) => {
+const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen, onToggle, onLogout, onSettings, overdueCount }) => {
   const { playTabs, playPop, playClick } = useSound();
 
   const handleTabChange = (tab: 'journal' | 'calendar' | 'analysis' | 'archive') => {
@@ -73,10 +74,15 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
           <nav className="space-y-2 pt-6 font-hand text-lg">
             <button 
               onClick={() => handleTabChange('journal')}
-              className={`flex items-center gap-3 w-full text-left p-2 rounded transition-colors group ${activeTab === 'journal' ? 'bg-highlighter-yellow/30 font-bold underline px-3' : 'hover:bg-highlighter-yellow/20'}`}
+              className={`flex items-center gap-3 w-full text-left p-2 rounded transition-colors group relative ${activeTab === 'journal' ? 'bg-highlighter-yellow/30 font-bold underline px-3' : 'hover:bg-highlighter-yellow/20'}`}
             >
               <LayoutDashboard size={20} className="group-hover:rotate-6 transition-transform" />
               <span>Tasks</span>
+              {overdueCount > 0 && (
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-marker bg-highlighter-pink text-white px-1.5 py-0.5 rounded shadow-sm animate-bounce">
+                  {overdueCount}
+                </span>
+              )}
             </button>
             <button 
               onClick={() => handleTabChange('calendar')}
