@@ -15,7 +15,7 @@
 
 A productivity application that helps you plan, schedule, and track your work. It goes beyond a simple to-do list by automatically arranging tasks into your calendar based on when you actually focus best.
 
-_"Vellum" is the high-quality parchment used for historical manuscripts. The name reflects the idea of treating your plans with care like writing on something that is meant to last._(❁´◡`❁)
+_**Note:** “Vellum” is a fine-quality parchment historically used for important manuscripts._(❁´◡`❁)
 
 ---
 
