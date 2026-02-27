@@ -13,7 +13,7 @@
   💜 <a href="https://devpost.com/software/vellum-tgv241">Devpost Submission</a>
 </p>
 
-It is a productivity system designed to help you plan, execute, and analyze your work. It is built for students and who need more than a simple to-do list.
+It is a productivity application designed to help you plan, execute, and analyze your work. It is built for students and who need more than a simple to-do list.
 
 *The name Vellum refers to the high-quality parchment used for historical manuscripts. This choice reflects the application's purpose: to serve as a premium, durable workspace for your most significant projects.* 🐇
 
@@ -33,7 +33,7 @@ The system helps you by:
 
 When you add a complex task, it  can automatically analyze it and break it down into smaller, actionable sub-tasks. It estimates the difficulty and time required for each step, allowing you to start working immediately without being overwhelmed by the scale of the project.
 
-### Smart Scheduling
+### Smart Scheduling 
 
 The application takes your list of tasks and automatically arranges them into your daily schedule. It respects your defined working hours and avoids scheduling conflicting appointments. The interface supports drag-and-drop adjustments, giving you full control over the final plan.
 
@@ -49,9 +49,9 @@ The application provides detailed insights into your work patterns:
 - **Velocity Tracking**: Monitors your completion rate to help you predict future performance.
 - **Energy Mapping**: identifies your peak productivity hours based on historical data.
 
-## deeply Integrated Scheduler
+## Integrated Scheduler
 
-The core innovation in Vellum is its scheduling engine, which automates the planning process. This system follows a specific logic to ensure your day is balanced and productive.
+The core part of Vellum is its scheduling engine, which automates the planning process. This system follows a specific logic to ensure your day is balanced and productive.
 
 ### 1. Prioritization
 
