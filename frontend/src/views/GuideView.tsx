@@ -61,11 +61,7 @@ const GuideView: React.FC = () => {
                </li>
                <li className="flex items-start gap-3">
                 <div className="w-6 h-6 rounded bg-ink/5 flex items-center justify-center mt-0.5"><BarChart3 size={14} /></div>
-                 <span><strong>Insights:</strong> Deep dives into how you're spending your focus time.</span>
-               </li>
-               <li className="flex items-start gap-3">
-                 <div className="w-6 h-6 rounded bg-ink/5 flex items-center justify-center mt-0.5"><Settings size={14} /></div>
-                 <span><strong>Settings:</strong> Tucked at the bottom. Use this to toggle your identity and core work hours.</span>
+                 <span><strong>Insights:</strong> How you're spending your focus time.</span>
                </li>
              </ul>
            </div>
@@ -92,7 +88,7 @@ const GuideView: React.FC = () => {
                 <div className="space-y-2 border-l-2 border-highlighter-blue/40 pl-3">
                   <h4 className="font-marker text-base flex items-center gap-2 text-ink/60"><Target size={14}/> Parameters</h4>
                   <p className="font-hand text-sm leading-relaxed opacity-60">
-                    Set your <strong>Skill Level</strong> (Mastery) and <strong>Priority</strong>. This isn't just metadata—the Smart Scheduler uses this to rank tasks.
+                    Set your <strong>Skill Level</strong> (Mastery) and <strong>Priority</strong>. The Smart Scheduler uses this to rank tasks.
                   </p>
                 </div>
                 <div className="space-y-2 border-l-2 border-highlighter-yellow/40 pl-3">
@@ -103,20 +99,8 @@ const GuideView: React.FC = () => {
                 </div>
              </div>
            </div>
-
-           {/* David Burns Sticky Note */}
-           <div className="sketch-border bg-[#fff9c4] p-8 transform rotate-1 shadow-sm relative group hover:rotate-0 transition-transform cursor-default">
-              <div className="absolute top-2 right-2 opacity-5 group-hover:opacity-20 transition-opacity"><Quote size={40} /></div>
-              <h3 className="font-marker text-xl mb-3 flex items-center gap-2 text-ink/80">
-                <TrendingUp size={18} className="text-green-600" /> David Burns' Method
-              </h3>
-              <p className="font-hand text-base leading-relaxed text-ink/70">
-                Dr. David Burns, author of <em>Feeling Good</em>, suggests predicting your <strong>Satisfaction Level</strong> before you work. 
-                <br/><br/>
-                We often overestimate how painful a task will be. By predicting joy first, and recording the actual result later, you retrain your brain to stop procrastinating.
-              </p>
-           </div>
         </div>
+
       </section>
 
       {/* ─── 2. TIMELINE ─── */}
@@ -147,7 +131,7 @@ const GuideView: React.FC = () => {
                   <div className="bg-white border-2 border-ink px-3 py-1 font-marker text-sm -rotate-1 shrink-0">MANUAL</div>
                   <div>
                     <h4 className="font-marker text-base mb-1">Grid Booking</h4>
-                    <p className="font-hand text-sm opacity-60 leading-relaxed">Click any open hour on the timeline to manually "Seal the Slot." Use this for tasks that <em>must</em> happen at a specific time.</p>
+                    <p className="font-hand text-sm opacity-60 leading-relaxed">Click any open hour on the timeline to manually "Assign the Task." Use this for tasks that <em>must</em> happen at a specific time.</p>
                   </div>
                 </div>
 
@@ -248,14 +232,24 @@ const GuideView: React.FC = () => {
                       <strong>Satisfaction Scorecard:</strong> This compares your <em>Predicted</em> vs <em>Actual</em> satisfaction scores. It's the ultimate tool for overcoming the "Emotional Weight" of starting.
                    </div>
                 </div>
+                <div className="sketch-border bg-[#fff9c4] p-8 transform rotate-1 shadow-sm relative group hover:rotate-0 transition-transform cursor-default">
+                  <div className="absolute top-2 right-2 opacity-5 group-hover:opacity-20 transition-opacity"><Quote size={40} /></div>
+                  <h3 className="font-marker text-xl mb-3 flex items-center gap-2 text-ink/80">
+                    <TrendingUp size={18} className="text-green-600" /> David Burns' Method
+                  </h3>
+                  <p className="font-hand text-base leading-relaxed text-ink/70">
+                    Dr. David Burns, author of <em>Feeling Good</em>, suggests predicting your <strong>Satisfaction Level</strong> before you work. 
+                    <br/><br/>
+                    We often overestimate how painful a task will be. By predicting joy first, and recording the actual result later, you retrain your brain to stop procrastinating.
+                  </p>
+                  </div>
              </div>
            </div>
         </div>
       </section>
 
-      {/* ─── Closing Quote ─── */}
       <footer className="mt-20 pt-16 border-t-4 border-double border-ink/20 text-center max-w-2xl mx-auto space-y-8 relative">
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 text-ink/5"><Quote size={80} /></div>
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 text-ink/5"><Quote size={30} /></div>
         
         <p className="font-hand text-2xl leading-relaxed text-ink/80 italic relative z-10">
           "The greatest source of fatigue is not the work itself, but the <strong>emotional weight</strong> of the tasks we leave unfinished."
@@ -265,21 +259,10 @@ const GuideView: React.FC = () => {
           <div className="w-12 h-[2px] bg-ink" />
           <p className="font-marker text-sm tracking-widest uppercase">Take the first step.</p>
         </div>
-        
-        <div className="pt-12 flex justify-center gap-6 opacity-10">
-           <Pencil size={20} /><SparklesIcon size={20} /><CheckCircle2 size={20} /><MousePointer2 size={20} />
-        </div>
       </footer>
     </div>
   );
 };
 
-/* Internal simple Sparkles placeholder icon */
-const SparklesIcon = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m12 3-1.912 5.813L4.275 10.725 10.088 12.637 12 18.45l1.912-5.813L19.725 13.275 13.912 11.363Z"/>
-    <path d="M5 3v4M3 5h4M19 17v4M17 19h4"/>
-  </svg>
-);
 
 export default GuideView;
