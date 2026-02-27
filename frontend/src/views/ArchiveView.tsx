@@ -89,8 +89,8 @@ const ArchiveView: React.FC<ArchiveViewProps> = ({ tasks, onDelete }) => {
                 <div className="w-12 h-12 sketch-border flex items-center justify-center opacity-40">
                   <Archive size={24} />
                 </div>
-                <div>
-                  <h3 className="marker-text text-2xl mb-1">
+                <div className="min-w-0">
+                  <h3 className="marker-text text-2xl mb-1 wrap-break-word line-clamp-2" title={task.description}>
                     {task.description}
                   </h3>
                   <div className="flex items-center gap-4 font-sketch text-sm text-ink-light/80">

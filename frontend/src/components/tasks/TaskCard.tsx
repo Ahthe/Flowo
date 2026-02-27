@@ -53,10 +53,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
   return (
     <div 
       onClick={() => onClick?.(task)}
-      className={`tape-effect sketch-border p-5 bg-white transform transition-all duration-300 hover:rotate-0 hover:scale-105 max-w-sm cursor-pointer ${task.id.length % 2 === 0 ? 'rotate-1' : '-rotate-1'} ${task.status === 'completed' ? 'opacity-50' : ''} ${isOverdue ? 'border-4 border-highlighter-pink/80 bg-red-50' : priorityStyles[task.priority]}`}
+      className={`tape-effect sketch-border p-5 bg-white transform transition-all duration-300 hover:rotate-0 hover:scale-105 max-w-sm overflow-hidden cursor-pointer ${task.id.length % 2 === 0 ? 'rotate-1' : '-rotate-1'} ${task.status === 'completed' ? 'opacity-50' : ''} ${isOverdue ? 'border-4 border-highlighter-pink/80 bg-red-50' : priorityStyles[task.priority]}`}
     >
       <div className="flex justify-between items-start mb-2">
-        <div className="flex-1 mr-2">
+        <div className="flex-1 mr-2 min-w-0">
           {isEditing ? (
              <div className="flex gap-1 items-center">
                 <input 
@@ -69,10 +69,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
                 <button onClick={() => { playClick(); setIsEditing(false); }} className="text-red-600"><X size={20}/></button>
              </div>
           ) : (
-            <div className="flex items-center gap-2 group/title cursor-pointer" onClick={() => { playClick(); setIsEditing(true); }}>
-              {priorityMarkers[task.priority]}
-              <h3 className="marker-text text-xl leading-tight inline-block border-b-2 border-transparent group-hover/title:border-highlighter-yellow transition-all">{task.description}</h3>
-              <Edit2 size={12} className="opacity-0 group-hover/title:opacity-30 ml-auto" />
+            <div className="flex items-start gap-2 group/title cursor-pointer" onClick={() => { playClick(); setIsEditing(true); }}>
+              <div className="shrink-0 mt-1">
+                {priorityMarkers[task.priority]}
+              </div>
+              <h3 
+                className="marker-text text-xl leading-tight wrap-break-word line-clamp-2 border-b-2 border-transparent group-hover/title:border-highlighter-yellow transition-all"
+                title={task.description}
+              >
+                {task.description}
+              </h3>
+              <Edit2 size={12} className="opacity-0 group-hover/title:opacity-30 ml-auto shrink-0 mt-2" />
             </div>
           )}
         </div>

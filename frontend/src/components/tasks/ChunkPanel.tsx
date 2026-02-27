@@ -50,11 +50,11 @@ const ChunkPanel: React.FC<ChunkPanelProps> = ({ task, onClose, onUpdateChunk, o
         <div className="flex justify-between items-start p-8 pb-4 bg-paper-bg z-10 shrink-0">
           <div>
             <span className="font-sketch text-sm uppercase tracking-widest text-ink-light block mb-1">Breakdown</span>
-            <h2 className="marker-text text-3xl leading-tight truncate max-w-[300px]" title={task.description}>{task.description}</h2>
+            <h2 className="marker-text text-3xl leading-tight wrap-break-word" title={task.description}>{task.description}</h2>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-highlighter-pink rounded-full transition-colors"
+            className="p-2 hover:bg-highlighter-pink rounded-full transition-colors shrink-0"
           >
             <X size={24} />
           </button>
@@ -62,22 +62,22 @@ const ChunkPanel: React.FC<ChunkPanelProps> = ({ task, onClose, onUpdateChunk, o
 
         <div className="flex-1 overflow-y-auto px-8 py-4 space-y-8 scroll-smooth custom-scrollbar">
            {/* Add New Chunk Form */}
-          <form onSubmit={handleAdd} className="sketch-border p-4 bg-white border-dashed">
+          <form onSubmit={handleAdd} className="sketch-border p-4 bg-white border-dashed shrink-0">
             <h3 className="font-sketch text-xs uppercase opacity-40 mb-3">Add Custom Milestone</h3>
             <div className="flex gap-2">
               <input 
                 value={newChunkName}
                 onChange={e => setNewChunkName(e.target.value)}
                 placeholder="Next step..."
-                className="flex-1 font-hand text-lg border-b border-ink/20 focus:border-highlighter-yellow focus:outline-none bg-transparent"
+                className="flex-1 font-hand text-lg border-b border-ink/20 focus:border-highlighter-yellow focus:outline-none bg-transparent min-w-0"
               />
               <input 
                 type="number"
                 value={newChunkDuration}
                 onChange={e => setNewChunkDuration(e.target.value)}
-                className="w-12 font-mono text-sm border-b border-ink/20 focus:border-highlighter-yellow focus:outline-none bg-transparent text-center"
+                className="w-12 font-mono text-sm border-b border-ink/20 focus:border-highlighter-yellow focus:outline-none bg-transparent text-center shrink-0"
               />
-              <button type="submit" className="p-2 bg-ink text-white hover:bg-highlighter-yellow hover:text-ink transition-all sketch-border">
+              <button type="submit" className="p-2 bg-ink text-white hover:bg-highlighter-yellow hover:text-ink transition-all sketch-border shrink-0">
                 <Plus size={16} />
               </button>
             </div>
@@ -100,13 +100,13 @@ const ChunkPanel: React.FC<ChunkPanelProps> = ({ task, onClose, onUpdateChunk, o
                         autoFocus
                         value={editingValue}
                         onChange={e => setEditingValue(e.target.value)}
-                        className="w-full font-hand text-lg border-b border-ink focus:outline-none bg-transparent"
+                        className="w-full font-hand text-lg border-b border-ink focus:outline-none bg-transparent min-w-0"
                       />
-                      <button onClick={() => saveEdit(chunk.id)} className="text-green-600"><Check size={18}/></button>
+                      <button onClick={() => saveEdit(chunk.id)} className="text-green-600 shrink-0"><Check size={18}/></button>
                     </div>
                   ) : (
-                    <div className="group flex items-center gap-2">
-                      <p className={`font-hand text-xl leading-snug truncate ${chunk.completed ? 'line-through' : ''}`}>
+                    <div className="group flex items-start gap-2">
+                      <p className={`font-hand text-xl leading-snug wrap-break-word ${chunk.completed ? 'line-through' : ''}`}>
                         {chunk.chunk_name}
                       </p>
                       <button onClick={() => startEdit(chunk)} className="opacity-0 group-hover:opacity-30 transition-opacity">
