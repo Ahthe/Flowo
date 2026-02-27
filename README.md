@@ -1,7 +1,7 @@
 <h1 align="center" style="font-size: 60px;">Vellum</h1>
 
 <p align="center">
-  <strong>Second Place Winner — Build4Students Hackathon 2026</strong>
+  <strong>🏆 Second Place Winner — Build4Students Hackathon 2026</strong>
 </p>
 
 <p align="center">
