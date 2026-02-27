@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://www.vellum.foo/">Try it out here</a> |
-  <a href="https://devpost.com/software/vellum-tgv241">Devpost Submission</a>
+  <a href="https://www.vellum.foo/">🔗 Try it out here</a> |
+  <a href="https://devpost.com/software/vellum-tgv241"> 🎨 Devpost Submission</a>
 </p>
 
 A productivity application that helps you plan, schedule, and track your work. It goes beyond a simple to-do list by automatically arranging tasks into your calendar based on when you actually focus best.
