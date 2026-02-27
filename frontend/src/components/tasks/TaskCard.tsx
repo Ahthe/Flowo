@@ -53,7 +53,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
   return (
     <div 
       onClick={() => onClick?.(task)}
-      className={`tape-effect sketch-border p-5 bg-white transform transition-all duration-300 hover:rotate-0 hover:scale-105 max-w-sm overflow-hidden cursor-pointer ${task.id.length % 2 === 0 ? 'rotate-1' : '-rotate-1'} ${task.status === 'completed' ? 'opacity-50' : ''} ${isOverdue ? 'border-4 border-highlighter-pink/80 bg-red-50' : priorityStyles[task.priority]}`}
+      className={`tape-effect sketch-border p-5 bg-white transform transition-all duration-300 hover:rotate-0 hover:scale-105 max-w-sm cursor-pointer ${task.id.length % 2 === 0 ? 'rotate-1' : '-rotate-1'} ${task.status === 'completed' ? 'opacity-50' : ''} ${isOverdue ? 'border-4 border-highlighter-pink/80 bg-red-50' : priorityStyles[task.priority]}`}
     >
       <div className="flex justify-between items-start mb-2">
         <div className="flex-1 mr-2 min-w-0">
