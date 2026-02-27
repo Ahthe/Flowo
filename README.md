@@ -140,20 +140,6 @@ Result for Day 1:
 
 The same process repeats for Day 2 and Day 3.
 
-### Where to find each part
-
-| What                               | File                   | Function                          |
-| ---------------------------------- | ---------------------- | --------------------------------- |
-| Entry point                        | `scheduler.service.ts` | `scheduleTasks()`                 |
-| Sort tasks by priority/deadline    | `scheduler.service.ts` | `activeTasks.sort(...)` (line 45) |
-| Build energy profile from DB       | `scheduler.service.ts` | `buildPeakHoursMap()`             |
-| Turn availability into time ranges | `scheduler.service.ts` | `precomputeDayWindows()`          |
-| Score and sort 15-min slots        | `scheduler.service.ts` | `generateScoredCandidates()`      |
-| Check for time collisions          | `scheduler.service.ts` | `hasCollision()`                  |
-| Check spacing between sessions     | `scheduler.service.ts` | `violatesSpacing()`               |
-| Parse "60m" or "1.5h" to minutes   | `scheduler.service.ts` | `parseDuration()`                 |
-| Save results to DB in one call     | `tasks.service.ts`     | `bulkInsertInstances()`           |
-
 ---
 
 ## Calendar Layout Algorithm
@@ -179,16 +165,7 @@ The algorithm runs in three passes over the day's instances (already sorted by s
 | Assign columns  | O(N x C)             | N = instances, C = max overlapping columns (usually 2–3)     |
 | **Total**       | **O(N)** in practice | C is bounded by screen width, so N x C is effectively linear |
 
-The old version was O(N^2) because it called `Math.max(...cluster.map(ci => new Date(ci.end)))` inside the loop, which re-scanned the entire cluster and created a new `Date` object for every item on every iteration.
-
-### Where to find it
-
-| What                       | File               | Line                           |
-| -------------------------- | ------------------ | ------------------------------ |
-| Date pre-parsing           | `CalendarView.tsx` | `startTimes` / `endTimes` Maps |
-| Cluster building           | `CalendarView.tsx` | `clusterMaxEnd` variable       |
-| Column assignment          | `CalendarView.tsx` | `colEnds: number[]` array      |
-| Pixel position calculation | `CalendarView.tsx` | `getTaskStyle()`               |
+(!) The worst can be O(N^2) if we re-scanned the entire cluster and created a new `Date` object for every item on every iteration.
 
 ---
 
@@ -210,13 +187,6 @@ The AI adjusts its time estimates based on the skill level you select:
 
 Each user is limited to **3 AI calls per day**. This is enforced at the database level using a Postgres function (`increment_ai_usage`). The function inserts a usage row, counts today's rows, and raises an exception if the count exceeds 3. This is done atomically to prevent race conditions where two simultaneous requests could both slip through.
 
-### Where to find it
-
-| What                        | File                                                  |
-| --------------------------- | ----------------------------------------------------- |
-| AI service and prompt       | `backend/src/ai/ai.service.ts`                        |
-| Rate limiter (DB function)  | `backend/database/migrations/009_atomic_ai_usage.sql` |
-| Frontend hook that calls it | `frontend/src/hooks/useTasks.ts` → `fetchChunks()`    |
 
 ---
 
