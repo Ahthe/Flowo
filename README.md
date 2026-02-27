@@ -1,10 +1,21 @@
-# Vellum
+<h1 align="center" style="font-size: 60px;">Vellum</h1>
+
+<p align="center">
+  🏆 <strong>Second Place Winner — Build4Students Hackathon 2026</strong>
+</p>
+
+<p align="center">
+  <img src="https://github.com/emanalytic/Vellum/blob/main/image.png" width="700" alt="Vellum Preview"/>
+</p>
+
+<p align="center">
+  🔗 <a href="https://www.vellum.foo/)">Try it out here</a> |
+  💜 <a href="https://devpost.com/software/vellum-tgv241">Devpost Submission</a>
+</p>
 
 It is a productivity system designed to help you plan, execute, and analyze your work. It is built for students and who need more than a simple to-do list.
 
 *The name Vellum refers to the high-quality parchment used for historical manuscripts. This choice reflects the application's purpose: to serve as a premium, durable workspace for your most significant projects.* 🐇
-
-![Alt text](https://github.com/emanalytic/Vellum/blob/main/image.png)
 
 ## Overview
 
