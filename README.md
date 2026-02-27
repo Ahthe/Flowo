@@ -231,14 +231,6 @@ vellum/
 │       │   └── supabase.ts           # Supabase client
 │       ├── types/index.ts            # Shared TypeScript types
 │       └── App.tsx                   # Root component, routing, auth
-│
-└── backend/database/
-    └── migrations/               # SQL migrations (run in order)
-        ├── 001_add_satisfaction_columns.sql
-        ├── 004_task_instances.sql
-        ├── 008_get_user_peak_hours.sql
-        ├── 009_atomic_ai_usage.sql
-        └── ...
 ```
 
 ---
@@ -383,8 +375,6 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 API_KEY=your-groq-api-key
 ```
 
-Run the SQL migration files (in `backend/database/migrations/`) in order against your Supabase database. You can do this through the Supabase SQL editor.
-
 Start the backend:
 
 ```bash
@@ -431,7 +421,6 @@ Contributions are welcome. Here is how to get started:
 
 - Keep it simple. Plain code is better than clever code.
 - If you add a new backend endpoint, add the matching call in `frontend/src/services/api.ts`.
-- If you change a database table, write a new migration file. Do not edit old migration files.
 - Run `npx tsc --noEmit` in both `backend/` and `frontend/` before pushing to catch type errors early.
 
 ---
