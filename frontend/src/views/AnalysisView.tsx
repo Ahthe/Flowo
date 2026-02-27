@@ -305,7 +305,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
               {hasLogData ? "Based on all your progress logs" : "No data yet"}
             </span>
           </div>
-          <div className="h-72 md:h-80 sketch-border bg-white p-4 md:p-5 relative overflow-hidden">
+          <div className="h-72 md:h-80 sketch-border bg-white p-4 md:p-5 relative overflow-hidden flex flex-col">
             {/* Subtle grid background */}
             <div
               className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -327,7 +327,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
                 </p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <BarChart
                   data={activityByHour}
                   margin={{ top: 15, right: 5, left: -25, bottom: 0 }}
@@ -413,7 +413,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
               {completedCount} total
             </div>
           </div>
-          <div className="h-72 md:h-80 sketch-border bg-white p-4 md:p-5 relative overflow-hidden group">
+          <div className="h-72 md:h-80 sketch-border bg-white p-4 md:p-5 relative overflow-hidden group flex flex-col">
             <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-15 transition-opacity">
               <Star size={90} />
             </div>
@@ -429,7 +429,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
                 </p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <ComposedChart
                   data={completionTimeline}
                   margin={{ top: 15, right: 15, left: -25, bottom: 0 }}
