@@ -48,7 +48,7 @@ The system does three things:
 
 ## How the Scheduler Works
 
-The scheduler lives in `backend/src/scheduler/scheduler.service.ts`. When you press the "Schedule" button, here is exactly what happens, step by step.
+When you press the "Smart Schedule" button, here is exactly what happens
 
 ### Step 1: Cleanup
 
