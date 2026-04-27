@@ -49,7 +49,7 @@ async function bootstrap() {
 
     await app.listen(port, '0.0.0.0');
 
-    logger.log(`Vellum Backend is running on port ${port}`);
+    logger.log(`Flowo Backend is running on port ${port}`);
     logger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   } catch (error) {
     logger.error('Fatal error during application startup', error);

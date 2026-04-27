@@ -35,6 +35,27 @@ export enum SkillLevel {
   MASTER = 'master',
 }
 
+export enum ContributionType {
+  BUILD = 'build',
+  PRACTICE = 'practice',
+  HEALTH = 'health',
+  PIPELINE = 'pipeline',
+  REVIEW = 'review',
+}
+
+export enum EffortSize {
+  TINY = 'tiny',
+  SMALL = 'small',
+  MEDIUM = 'medium',
+  DEEP = 'deep',
+  MAJOR = 'major',
+}
+
+export enum JournalEntryType {
+  THOUGHT = 'thought',
+  TRAINING = 'training',
+}
+
 export class TaskChunkDto {
   @IsString()
   @IsOptional()
@@ -111,6 +132,27 @@ export class UpsertTaskDto {
   @IsOptional()
   actualSatisfaction?: number;
 
+  @IsString()
+  @IsOptional()
+  pursuitId?: string;
+
+  @IsEnum(ContributionType)
+  @IsOptional()
+  contributionType?: ContributionType;
+
+  @IsEnum(EffortSize)
+  @IsOptional()
+  effortSize?: EffortSize;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  xpValue?: number;
+
+  @IsDateString()
+  @IsOptional()
+  completedAt?: string;
+
   @IsArray()
   @IsOptional()
   history?: any[];
@@ -124,4 +166,84 @@ export class UpsertTaskDto {
   @Min(0)
   @IsOptional()
   minSpacingMinutes?: number;
+}
+
+export class UpsertPursuitDto {
+  @IsString()
+  @IsOptional()
+  id?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @IsString()
+  @IsOptional()
+  why?: string;
+
+  @IsString()
+  @IsOptional()
+  target?: string;
+
+  @IsString()
+  @IsOptional()
+  weeklyFocus?: string;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  weeklyTargetXp?: number;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @IsDateString()
+  @IsOptional()
+  deadline?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
+
+  @IsString()
+  @IsOptional()
+  color?: string;
+}
+
+export class UpsertJournalEntryDto {
+  @IsString()
+  @IsOptional()
+  id?: string;
+
+  @IsEnum(JournalEntryType)
+  entryType: JournalEntryType;
+
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @IsString()
+  @IsOptional()
+  body?: string;
+
+  @IsString()
+  @IsOptional()
+  mood?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
+
+  @IsString()
+  @IsOptional()
+  pursuitId?: string;
+
+  @IsDateString()
+  @IsOptional()
+  loggedAt?: string;
+
+  @IsOptional()
+  trainingData?: any;
 }

@@ -6,6 +6,13 @@ export type TaskStatus =
   | "completed"
   | "archived"
   | "overdue";
+export type ContributionType =
+  | "build"
+  | "practice"
+  | "health"
+  | "pipeline"
+  | "review";
+export type EffortSize = "tiny" | "small" | "medium" | "deep" | "major";
 
 export interface TaskChunk {
   id: string;
@@ -37,6 +44,11 @@ export interface Task {
   scheduledEnd?: string;
   predictedSatisfaction?: number;
   actualSatisfaction?: number;
+  pursuitId?: string;
+  contributionType?: ContributionType;
+  effortSize?: EffortSize;
+  xpValue?: number;
+  completedAt?: string;
   targetSessionsPerDay?: number;
   minSpacingMinutes?: number;
   instances?: TaskInstance[];
@@ -55,6 +67,52 @@ export interface UserPreferences {
   availableHours: { [key: string]: string[] };
   autoSchedule: boolean;
   soundEnabled: boolean;
+}
+
+export interface Pursuit {
+  id: string;
+  title: string;
+  why?: string;
+  target?: string;
+  weeklyFocus?: string;
+  weeklyTargetXp?: number;
+  category: string;
+  deadline?: string;
+  status: "active" | "paused" | "completed" | "archived";
+  color: "yellow" | "pink" | "blue" | "green" | "orange";
+  createdAt?: string;
+}
+
+export type JournalEntryType = "thought" | "training";
+
+export interface TrainingExercise {
+  id?: string;
+  name: string;
+  sets: number;
+  reps: string;
+  weight: string;
+  unit: string;
+  notes?: string;
+}
+
+export interface TrainingData {
+  muscleGroup: string;
+  currentPounds?: string;
+  exercises: TrainingExercise[];
+  notes?: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  entryType: JournalEntryType;
+  title?: string;
+  body?: string;
+  mood?: string;
+  tags?: string[];
+  pursuitId?: string;
+  loggedAt: string;
+  trainingData?: TrainingData;
+  createdAt?: string;
 }
 
 export interface SchedulerResult {

@@ -35,11 +35,43 @@ export interface Task {
   scheduledEnd?: string;
   predictedSatisfaction?: number;
   actualSatisfaction?: number;
+  pursuitId?: string;
+  contributionType?: string;
+  effortSize?: string;
+  xpValue?: number;
+  completedAt?: string;
   targetSessionsPerDay?: number;
   minSpacingMinutes?: number;
   chunks?: TaskChunk[];
   instances?: TaskInstance[];
   history?: TaskHistory[];
+}
+
+export interface Pursuit {
+  id: string;
+  title: string;
+  why?: string;
+  target?: string;
+  weeklyFocus?: string;
+  weeklyTargetXp?: number;
+  category: string;
+  deadline?: string;
+  status: string;
+  color: string;
+  createdAt?: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  entryType: 'thought' | 'training';
+  title?: string;
+  body?: string;
+  mood?: string;
+  tags?: string[];
+  pursuitId?: string;
+  loggedAt: string;
+  trainingData?: any;
+  createdAt?: string;
 }
 
 export interface UserPreferences {

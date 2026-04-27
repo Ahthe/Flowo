@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut, LayoutDashboard, Settings, ChevronLeft, Smile, Calendar, BarChart3, Archive } from 'lucide-react';
+import { LogOut, LayoutDashboard, Settings, ChevronLeft, Smile, Calendar, BarChart3, Archive, Target, BookOpen } from 'lucide-react';
 import Logo from '../common/Logo';
 import { useSound } from '../../hooks/useSound';
 
@@ -10,7 +10,7 @@ interface SidebarProps {
     avatar?: string;
   };
   activeTab: string;
-  onTabChange: (tab: 'journal' | 'calendar' | 'analysis' | 'archive') => void;
+  onTabChange: (tab: 'journal' | 'pursuits' | 'calendar' | 'logs' | 'analysis' | 'archive' | 'guide') => void;
   isOpen: boolean;
   onToggle: () => void;
   onLogout: () => void;
@@ -21,7 +21,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen, onToggle, onLogout, onSettings, overdueCount }) => {
   const { playTabs, playPop, playClick } = useSound();
 
-  const handleTabChange = (tab: 'journal' | 'calendar' | 'analysis' | 'archive') => {
+  const handleTabChange = (tab: 'journal' | 'pursuits' | 'calendar' | 'logs' | 'analysis' | 'archive' | 'guide') => {
     playTabs();
     onTabChange(tab);
     if (window.innerWidth < 1024) onToggle();
@@ -54,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
             <div className="flex items-center gap-3">
               <Logo size={32} />
               <h1 className="font-marker text-2xl sm:text-4xl -rotate-2">
-                Vellum
+                Flowo
               </h1>
             </div>
           </div>
@@ -85,11 +85,25 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
               )}
             </button>
             <button 
+              onClick={() => handleTabChange('pursuits')}
+              className={`flex items-center gap-3 w-full text-left p-2 rounded transition-colors group ${activeTab === 'pursuits' ? 'bg-highlighter-yellow/30 font-bold underline px-3' : 'hover:bg-highlighter-yellow/20'}`}
+            >
+              <Target size={20} className="group-hover:scale-110 transition-transform" />
+              <span>Pursuits</span>
+            </button>
+            <button 
               onClick={() => handleTabChange('calendar')}
               className={`flex items-center gap-3 w-full text-left p-2 rounded transition-colors group ${activeTab === 'calendar' ? 'bg-highlighter-yellow/30 font-bold underline px-3' : 'hover:bg-highlighter-yellow/20'}`}
             >
               <Calendar size={20} className="group-hover:-rotate-6 transition-transform" />
               <span>Calendar</span>
+            </button>
+            <button 
+              onClick={() => handleTabChange('logs')}
+              className={`flex items-center gap-3 w-full text-left p-2 rounded transition-colors group ${activeTab === 'logs' ? 'bg-highlighter-yellow/30 font-bold underline px-3' : 'hover:bg-highlighter-yellow/20'}`}
+            >
+              <BookOpen size={20} className="group-hover:rotate-6 transition-transform" />
+              <span>Journal</span>
             </button>
             <button 
               onClick={() => handleTabChange('analysis')}

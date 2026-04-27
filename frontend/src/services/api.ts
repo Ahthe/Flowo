@@ -1,20 +1,18 @@
-import { supabase } from "./supabase";
 import type {
   Task,
   TaskHistory,
   UserPreferences,
   SchedulerResult,
+  Pursuit,
+  JournalEntry,
 } from "../types";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+// AUTH BYPASS: Use static dev token instead of real Supabase session
 async function getHeaders() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) throw new Error("No active session");
   return {
-    Authorization: `Bearer ${session.access_token}`,
+    Authorization: `Bearer dev-bypass-token`,
     "Content-Type": "application/json",
   };
 }
@@ -32,6 +30,69 @@ export const api = {
     const res = await fetch(`${API_URL}/tasks`, { headers });
     await assertOk(res, "Failed to fetch tasks");
     return res.json();
+  },
+
+  async getPursuits(): Promise<Pursuit[]> {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/pursuits`, { headers });
+    await assertOk(res, "Failed to fetch pursuits");
+    return res.json();
+  },
+
+  async upsertPursuit(pursuit: Partial<Pursuit> & { title: string }) {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/pursuits`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(pursuit),
+    });
+    await assertOk(res, "Failed to save pursuit");
+    return res.json();
+  },
+
+  async deletePursuit(pursuitId: string) {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/pursuits/${pursuitId}`, {
+      method: "DELETE",
+      headers,
+    });
+    await assertOk(res, "Failed to delete pursuit");
+  },
+
+  async getJournalEntries(): Promise<JournalEntry[]> {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/journal-entries`, { headers });
+    await assertOk(res, "Failed to fetch journal entries");
+    return res.json();
+  },
+
+  async upsertJournalEntry(entry: Partial<JournalEntry> & { entryType: JournalEntry["entryType"] }) {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/journal-entries`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(entry),
+    });
+    await assertOk(res, "Failed to save journal entry");
+    return res.json();
+  },
+
+  async deleteJournalEntry(entryId: string) {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/journal-entries/${entryId}`, {
+      method: "DELETE",
+      headers,
+    });
+    await assertOk(res, "Failed to delete journal entry");
+  },
+
+  async resetAll() {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/tasks/reset-all`, {
+      method: "DELETE",
+      headers,
+    });
+    await assertOk(res, "Failed to reset workspace");
   },
 
   async upsertTask(task: Partial<Task> & { id: string }) {

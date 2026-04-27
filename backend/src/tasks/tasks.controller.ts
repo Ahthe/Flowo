@@ -12,7 +12,11 @@ import {
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { SupabaseGuard } from '../supabase/supabase.guard';
-import { UpsertTaskDto } from './dto/task.dto';
+import {
+  UpsertJournalEntryDto,
+  UpsertPursuitDto,
+  UpsertTaskDto,
+} from './dto/task.dto';
 import { LogProgressDto } from './dto/log-progress.dto';
 import { PreferencesDto } from './dto/preferences.dto';
 
@@ -26,9 +30,63 @@ export class TasksController {
     return this.tasksService.findAll(this.extractToken(req), req.user.id);
   }
 
+  @Get('pursuits')
+  findPursuits(@Req() req: any) {
+    return this.tasksService.findPursuits(this.extractToken(req), req.user.id);
+  }
+
+  @Get('journal-entries')
+  findJournalEntries(@Req() req: any) {
+    return this.tasksService.findJournalEntries(
+      this.extractToken(req),
+      req.user.id,
+    );
+  }
+
   @Post()
   upsert(@Req() req: any, @Body() dto: UpsertTaskDto) {
     return this.tasksService.upsert(this.extractToken(req), req.user.id, dto);
+  }
+
+  @Post('pursuits')
+  upsertPursuit(@Req() req: any, @Body() dto: UpsertPursuitDto) {
+    return this.tasksService.upsertPursuit(
+      this.extractToken(req),
+      req.user.id,
+      dto,
+    );
+  }
+
+  @Post('journal-entries')
+  upsertJournalEntry(@Req() req: any, @Body() dto: UpsertJournalEntryDto) {
+    return this.tasksService.upsertJournalEntry(
+      this.extractToken(req),
+      req.user.id,
+      dto,
+    );
+  }
+
+  @Delete('journal-entries/:entryId')
+  removeJournalEntry(@Req() req: any, @Param('entryId') entryId: string) {
+    return this.tasksService.removeJournalEntry(
+      this.extractToken(req),
+      req.user.id,
+      entryId,
+    );
+  }
+
+  @Delete('reset-all')
+  resetAll(@Req() req: any) {
+    return this.tasksService.resetAll(this.extractToken(req), req.user.id);
+  }
+
+  @Delete('pursuits/:pursuitId')
+  removePursuit(@Req() req: any, @Param('pursuitId') pursuitId: string) {
+    return this.tasksService.removePursuit(
+      this.extractToken(req),
+      req.user.id,
+      pursuitId,
+    );
   }
 
   @Delete(':id')

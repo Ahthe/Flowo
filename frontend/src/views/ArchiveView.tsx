@@ -31,7 +31,7 @@ const ArchiveView: React.FC<ArchiveViewProps> = ({ tasks, onDelete }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Vellum-Archive-${new Date().toISOString().split("T")[0]}.json`;
+    a.download = `Flowo-Archive-${new Date().toISOString().split("T")[0]}.json`;
     a.click();
   };
 
@@ -44,7 +44,7 @@ const ArchiveView: React.FC<ArchiveViewProps> = ({ tasks, onDelete }) => {
             Archive
           </h2>
           <p className="font-sketch text-lg md:text-xl text-ink-light mt-4">
-            See how far you have come.
+            Completed work and history.
           </p>
         </div>
 

@@ -1,15 +1,43 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { api } from "../services/api";
-import type { Task, TaskHistory, TaskChunk } from "../types";
+import type { JournalEntry, Task, TaskHistory, TaskChunk, Pursuit } from "../types";
 import { useToast } from "../context/ToastContext";
 import { useConfirm } from "../context/ConfirmContext";
 import type { Session } from "@supabase/supabase-js";
+
+const XP_BY_EFFORT = {
+  tiny: 5,
+  small: 10,
+  medium: 25,
+  deep: 50,
+  major: 100,
+} as const;
+
+export interface SmartScheduleSummary {
+  scheduledCount: number;
+  unschedulableCount: number;
+  unschedulableTasks: string[];
+  protectedPinnedCount: number;
+  topHours: string[];
+}
+
+export interface CompletionSummary {
+  taskTitle: string;
+  xpValue: number;
+  contributionType?: Task["contributionType"];
+  pursuitTitle?: string;
+}
 
 export const useTasks = (session: Session | null) => {
   const { showToast } = useToast();
   const { confirm } = useConfirm();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [pursuits, setPursuits] = useState<Pursuit[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [journalEntriesError, setJournalEntriesError] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
+  const [smartScheduleSummary, setSmartScheduleSummary] = useState<SmartScheduleSummary | null>(null);
+  const [completionSummary, setCompletionSummary] = useState<CompletionSummary | null>(null);
   const [isClassifying, setIsClassifying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const tasksRef = useRef<Task[]>([]);
@@ -31,6 +59,32 @@ export const useTasks = (session: Session | null) => {
     }
   }, [session]);
 
+  const fetchPursuits = useCallback(async () => {
+    if (!session) return;
+    try {
+      const dbPursuits = await api.getPursuits();
+      setPursuits(dbPursuits);
+    } catch (e) {
+      console.error("Error fetching pursuits:", e);
+    }
+  }, [session]);
+
+  const fetchJournalEntries = useCallback(async () => {
+    if (!session) return;
+    try {
+      const dbEntries = await api.getJournalEntries();
+      setJournalEntries(dbEntries);
+      setJournalEntriesError(null);
+    } catch (e) {
+      console.error("Error fetching journal entries:", e);
+      setJournalEntriesError(
+        e instanceof Error
+          ? e.message
+          : "Journal entries could not be loaded.",
+      );
+    }
+  }, [session]);
+
   const fetchChunks = useCallback(async (description: string, skill: string) => {
     const data = await api.classifyTask(description, skill);
     return (data.suggested_chunks || []).map((c: { chunk_name?: string; title?: string; estimated_duration_min: number }) => ({
@@ -44,10 +98,15 @@ export const useTasks = (session: Session | null) => {
   useEffect(() => {
     if (session) {
       fetchTasks();
+      fetchPursuits();
+      fetchJournalEntries();
     } else {
       setTasks([]);
+      setPursuits([]);
+      setJournalEntries([]);
+      setJournalEntriesError(null);
     }
-  }, [session, fetchTasks]);
+  }, [session, fetchTasks, fetchPursuits, fetchJournalEntries]);
 
   const addTask = async (deck: {
     description: string;
@@ -59,12 +118,33 @@ export const useTasks = (session: Session | null) => {
     predictedSatisfaction?: number;
     targetSessionsPerDay?: number;
     minSpacingMinutes?: number;
+    pursuitId?: string;
+    contributionType?: Task["contributionType"];
+    effortSize?: Task["effortSize"];
+    scheduleOnTimeline?: boolean;
+    scheduledStart?: string;
   }) => {
     if (!session) return;
-    if (!deck.deadline) {
+    if (!deck.deadline && !deck.scheduleOnTimeline) {
       showToast("A deadline is essential to your journey.", "error");
       return;
     }
+
+    if (deck.scheduleOnTimeline && !deck.scheduledStart) {
+      showToast("Pick a start time for the timeline.", "error");
+      return;
+    }
+
+    const durationMin = parseInt(deck.estimatedTime) || 60;
+    const scheduledStart = deck.scheduledStart ? new Date(deck.scheduledStart) : null;
+    if (deck.scheduleOnTimeline && scheduledStart && scheduledStart <= new Date()) {
+      showToast("Timeline start must be in the future.", "error");
+      return;
+    }
+
+    const scheduledEnd = scheduledStart
+      ? new Date(scheduledStart.getTime() + durationMin * 60000)
+      : null;
 
     setIsClassifying(true);
     try {
@@ -88,7 +168,9 @@ export const useTasks = (session: Session | null) => {
         description: deck.description,
         skillLevel: deck.skillLevel,
         priority: deck.priority as any,
-        deadline: new Date(deck.deadline).toISOString(),
+        deadline: deck.deadline
+          ? new Date(deck.deadline).toISOString()
+          : scheduledEnd!.toISOString(),
         estimatedTime: `${deck.estimatedTime}m`,
         status: "idle",
         totalTimeSeconds: 0,
@@ -97,15 +179,49 @@ export const useTasks = (session: Session | null) => {
         predictedSatisfaction: deck.predictedSatisfaction,
         targetSessionsPerDay: deck.targetSessionsPerDay || 1,
         minSpacingMinutes: deck.minSpacingMinutes || 60,
+        pursuitId: deck.pursuitId || undefined,
+        contributionType: deck.contributionType,
+        effortSize: deck.effortSize || "medium",
+        xpValue: XP_BY_EFFORT[deck.effortSize || "medium"],
       };
 
       await api.upsertTask(newTask);
+
+      let timelineCreated = false;
+      if (deck.scheduleOnTimeline && scheduledStart && scheduledEnd) {
+        try {
+          const result = await api.createInstance({
+            taskId: newTask.id,
+            start: scheduledStart.toISOString(),
+            end: scheduledEnd.toISOString(),
+            isPinned: true,
+          });
+          timelineCreated = true;
+          newTask.instances = [{
+            id: result.instanceId,
+            start: scheduledStart.toISOString(),
+            end: scheduledEnd.toISOString(),
+            status: "scheduled",
+            isPinned: true,
+          }];
+        } catch (e) {
+          console.error("Timeline placement error:", e);
+        }
+      }
+
       setTasks(prev => [newTask, ...prev]);
       
       if (aiLimitReached) {
         showToast("Task saved manually. (Daily AI limit reached)", "success");
       } else {
-        showToast("Task added!", "success");
+        showToast(
+          deck.scheduleOnTimeline
+            ? timelineCreated
+              ? "Task added to the timeline!"
+              : "Task saved, but timeline placement failed."
+            : "Task added!",
+          timelineCreated || !deck.scheduleOnTimeline ? "success" : "info",
+        );
       }
       return newTask;
     } catch (e: any) {
@@ -134,16 +250,37 @@ export const useTasks = (session: Session | null) => {
       }
     }
 
+    const xpUpdates = updates.effortSize && updates.xpValue === undefined
+      ? { ...updates, xpValue: XP_BY_EFFORT[updates.effortSize] }
+      : updates;
+    const normalizedUpdates = xpUpdates.status === "completed" && !xpUpdates.completedAt
+      ? { ...xpUpdates, completedAt: new Date().toISOString() }
+      : xpUpdates.status && xpUpdates.status !== "completed"
+        ? { ...xpUpdates, completedAt: undefined }
+        : xpUpdates;
+
     const originalTasks = [...tasksRef.current];
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    const originalTask = originalTasks.find(t => t.id === id);
+    const shouldShowCompletionSummary =
+      normalizedUpdates.status === "completed" && originalTask?.status !== "completed";
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...normalizedUpdates } : t));
 
     if (session) {
       try {
         const taskToUpdate = tasksRef.current.find(t => t.id === id);
         if (taskToUpdate) {
-          const finalTask = { ...taskToUpdate, ...updates };
+          const finalTask = { ...taskToUpdate, ...normalizedUpdates };
           const { instances, ...cleanTask } = finalTask as any; 
           await api.upsertTask(cleanTask);
+          if (shouldShowCompletionSummary) {
+            const pursuit = pursuits.find(p => p.id === finalTask.pursuitId);
+            setCompletionSummary({
+              taskTitle: finalTask.description,
+              xpValue: finalTask.xpValue || XP_BY_EFFORT[finalTask.effortSize || "medium"],
+              contributionType: finalTask.contributionType,
+              pursuitTitle: pursuit?.title,
+            });
+          }
         }
       } catch (e: any) {
         console.error("Update error:", e);
@@ -151,8 +288,17 @@ export const useTasks = (session: Session | null) => {
         const msg = e.message || "Something went wrong.";
         showToast(`Failed to save: ${msg}`, "error");
       }
+    } else if (shouldShowCompletionSummary && originalTask) {
+      const finalTask = { ...originalTask, ...normalizedUpdates };
+      const pursuit = pursuits.find(p => p.id === finalTask.pursuitId);
+      setCompletionSummary({
+        taskTitle: finalTask.description,
+        xpValue: finalTask.xpValue || XP_BY_EFFORT[finalTask.effortSize || "medium"],
+        contributionType: finalTask.contributionType,
+        pursuitTitle: pursuit?.title,
+      });
     }
-  }, [session, showToast]);
+  }, [session, showToast, pursuits]);
 
   const deleteTask = useCallback(async (id: string) => {
     const taskToDelete = tasksRef.current.find(t => t.id === id);
@@ -310,6 +456,123 @@ export const useTasks = (session: Session | null) => {
     await updateTask(taskId, { chunks: newChunks });
   }, [updateTask]);
 
+  const savePursuit = useCallback(async (pursuit: Partial<Pursuit> & { title: string }) => {
+    if (!session) return;
+    try {
+      const saved = await api.upsertPursuit(pursuit);
+      setPursuits(prev => {
+        const exists = prev.some(p => p.id === saved.id);
+        return exists ? prev.map(p => p.id === saved.id ? saved : p) : [saved, ...prev];
+      });
+      showToast("Pursuit saved.", "success");
+      return saved as Pursuit;
+    } catch (e: any) {
+      console.error("Pursuit save error:", e);
+      showToast("Failed to save pursuit: " + (e.message || "Something went wrong."), "error");
+    }
+  }, [session, showToast]);
+
+  const deletePursuit = useCallback(async (pursuitId: string) => {
+    const pursuit = pursuits.find(p => p.id === pursuitId);
+    const confirmed = await confirm({
+      title: 'Archive this pursuit?',
+      message: pursuit ? `Remove "${pursuit.title}" and unlink its tasks?` : "Remove this pursuit?",
+      confirmText: 'Remove',
+      cancelText: 'Keep It',
+      type: 'danger'
+    });
+
+    if (!confirmed || !session) return;
+
+    const originalPursuits = [...pursuits];
+    const originalTasks = [...tasksRef.current];
+    setPursuits(prev => prev.filter(p => p.id !== pursuitId));
+    setTasks(prev => prev.map(t => t.pursuitId === pursuitId ? { ...t, pursuitId: undefined } : t));
+
+    try {
+      await api.deletePursuit(pursuitId);
+      showToast("Pursuit removed.", "info");
+    } catch (e) {
+      console.error("Pursuit delete error:", e);
+      setPursuits(originalPursuits);
+      setTasks(originalTasks);
+      showToast("Failed to remove pursuit.", "error");
+    }
+  }, [session, pursuits, confirm, showToast]);
+
+  const saveJournalEntry = useCallback(async (entry: Partial<JournalEntry> & { entryType: JournalEntry["entryType"] }) => {
+    if (!session) return;
+    try {
+      const saved = await api.upsertJournalEntry(entry);
+      setJournalEntries(prev => {
+        const exists = prev.some(item => item.id === saved.id);
+        const next = exists ? prev.map(item => item.id === saved.id ? saved : item) : [saved, ...prev];
+        return next.sort((a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime());
+      });
+      showToast(entry.entryType === "training" ? "Training log saved." : "Journal entry saved.", "success");
+      return saved as JournalEntry;
+    } catch (e: any) {
+      console.error("Journal entry save error:", e);
+      showToast("Failed to save journal entry: " + (e.message || "Something went wrong."), "error");
+    }
+  }, [session, showToast]);
+
+  const deleteJournalEntry = useCallback(async (entryId: string) => {
+    const entry = journalEntries.find(item => item.id === entryId);
+    const confirmed = await confirm({
+      title: "Delete this entry?",
+      message: entry?.title ? `Remove "${entry.title}" from your journal?` : "Remove this journal entry?",
+      confirmText: "Delete",
+      cancelText: "Keep It",
+      type: "danger",
+    });
+
+    if (!confirmed || !session) return;
+
+    const originalEntries = [...journalEntries];
+    setJournalEntries(prev => prev.filter(item => item.id !== entryId));
+
+    try {
+      await api.deleteJournalEntry(entryId);
+      showToast("Journal entry deleted.", "info");
+    } catch (e) {
+      console.error("Journal entry delete error:", e);
+      setJournalEntries(originalEntries);
+      showToast("Failed to delete journal entry.", "error");
+    }
+  }, [session, journalEntries, confirm, showToast]);
+
+  const resetAllData = useCallback(async () => {
+    const confirmed = await confirm({
+      title: "Reset everything?",
+      message: "This permanently deletes all tasks, pursuits, schedules, progress logs, and journal entries. Settings stay intact.",
+      confirmText: "Reset All",
+      cancelText: "Cancel",
+      type: "danger",
+    });
+
+    if (!confirmed || !session) return;
+
+    const originalTasks = [...tasksRef.current];
+    const originalPursuits = [...pursuits];
+    const originalEntries = [...journalEntries];
+
+    setTasks([]);
+    setPursuits([]);
+    setJournalEntries([]);
+
+    try {
+      await api.resetAll();
+      showToast("Workspace reset.", "info");
+    } catch (e: any) {
+      console.error("Reset workspace error:", e);
+      setTasks(originalTasks);
+      setPursuits(originalPursuits);
+      setJournalEntries(originalEntries);
+      showToast("Failed to reset workspace: " + (e.message || "Something went wrong."), "error");
+    }
+  }, [session, pursuits, journalEntries, confirm, showToast]);
+
 
   const handleSaveLog = useCallback(async (taskId: string, log: TaskHistory) => {
     if (!session) return;
@@ -335,8 +598,35 @@ export const useTasks = (session: Session | null) => {
     if (!session) return;
     setIsScheduling(true);
     try {
+      const now = new Date();
+      const protectedPinnedCount = tasksRef.current.reduce((count, task) => {
+        return count + (task.instances || []).filter((instance) => {
+          return instance.isPinned && instance.status === "scheduled" && new Date(instance.start) >= now;
+        }).length;
+      }, 0);
       const result = await api.runSmartSchedule();
       await fetchTasks();
+      const hourCounts = new Map<number, number>();
+      result.schedule.forEach((slot) => {
+        const hour = new Date(slot.start).getHours();
+        hourCounts.set(hour, (hourCounts.get(hour) || 0) + 1);
+      });
+      const topHours = Array.from(hourCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([hour]) =>
+          new Date(2000, 0, 1, hour).toLocaleTimeString([], {
+            hour: "numeric",
+            hour12: true,
+          }),
+        );
+      setSmartScheduleSummary({
+        scheduledCount: result.scheduledCount,
+        unschedulableCount: result.unschedulableCount,
+        unschedulableTasks: result.unschedulableTasks || [],
+        protectedPinnedCount,
+        topHours,
+      });
       if (result.scheduledCount > 0) {
         showToast(`Scheduled ${result.scheduledCount} session${result.scheduledCount > 1 ? 's' : ''}!`, "success");
       } else {
@@ -356,12 +646,24 @@ export const useTasks = (session: Session | null) => {
 
   return {
     tasks,
+    pursuits,
+    journalEntries,
+    journalEntriesError,
+    smartScheduleSummary,
+    setSmartScheduleSummary,
+    completionSummary,
+    setCompletionSummary,
     setTasks,
     tasksRef,
     isLoading,
     isScheduling,
     isClassifying,
     addTask,
+    savePursuit,
+    deletePursuit,
+    saveJournalEntry,
+    deleteJournalEntry,
+    resetAllData,
     updateTask,
     deleteTask,
     handleSaveLog,
@@ -372,7 +674,9 @@ export const useTasks = (session: Session | null) => {
     deleteChunk,
     removeInstance,
     addPinnedInstance,
-    fetchTasks
+    fetchTasks,
+    fetchPursuits,
+    fetchJournalEntries
   };
 };
 

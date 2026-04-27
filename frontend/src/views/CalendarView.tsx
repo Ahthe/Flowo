@@ -115,7 +115,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             instanceId: inst.id,
             start: inst.start,
             end: inst.end,
-            instStatus: inst.status
+            instStatus: inst.status,
+            isPinned: inst.isPinned || false,
           });
         });
       } 
@@ -126,7 +127,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           instanceId: `legacy-${task.id}`,
           start: task.scheduledStart,
           end: task.scheduledEnd,
-          instStatus: task.status
+          instStatus: task.status,
+          isPinned: true,
         });
       }
     });
@@ -294,7 +296,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       "Saturday",
       "Sunday",
     ].forEach((day) => {
-      hours[day] = ["07:00", "19:00"];
+      hours[day] = ["04:00", "19:00"];
     });
     onUpdatePreferences({ ...preferences, availableHours: hours });
   }, [preferences, onUpdatePreferences]);
@@ -359,6 +361,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           <h2 className="marker-text text-3xl md:text-5xl inline-block px-4 py-1 bg-highlighter-yellow shadow-sketch rotate-1">
             The Blueprint
           </h2>
+          <p className="font-sketch text-sm md:text-base text-ink-light mt-3 max-w-md">
+            Scheduled sessions and availability.
+          </p>
           <div className="flex gap-4 md:gap-8 mt-4 font-hand text-xl md:text-2xl text-ink-light ml-2">
             <button
                 onClick={() => { playClick(); setView("day"); }}
@@ -527,6 +532,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     const heightNum = parseFloat(String(style.height));
                     const isCompact = heightNum < 36;
                     const isTiny = heightNum < 24;
+                    const scheduleKind = inst.isPinned ? "Manual" : "Smart";
 
                     return (
                       <div
@@ -535,7 +541,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                           e.stopPropagation();
                           onTaskClick?.(inst);
                         }}
-                        className={`rounded-sm overflow-hidden flex flex-col cursor-pointer transition-all border-2 border-ink/15 hover:border-ink/40 shadow-sm hover:shadow-md group/task border-l-4 ${getPriorityBorderColor(inst.priority)} ${getPriorityBg(inst.priority)}`}
+                        className={`rounded-sm overflow-hidden flex flex-col cursor-pointer transition-all border-2 hover:border-ink/40 shadow-sm hover:shadow-md group/task border-l-4 ${
+                          inst.isPinned
+                            ? "border-ink/40 border-dashed ring-1 ring-highlighter-pink/40"
+                            : "border-ink/15"
+                        } ${getPriorityBorderColor(inst.priority)} ${getPriorityBg(inst.priority)}`}
                         style={style}
                       >
                         <div
@@ -559,10 +569,17 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                               </button>
                             )}
                             {!isTiny && inst._maxCol <= 2 && (
-                              <Clock
-                                size={isCompact ? 9 : 12}
-                                className="text-ink/20 group-hover/task:text-highlighter-pink transition-colors shrink-0 mt-0.5 ml-1"
-                              />
+                              inst.isPinned ? (
+                                <Pin
+                                  size={isCompact ? 9 : 12}
+                                  className="text-highlighter-pink shrink-0 mt-0.5 ml-1"
+                                />
+                              ) : (
+                                <Clock
+                                  size={isCompact ? 9 : 12}
+                                  className="text-ink/20 group-hover/task:text-highlighter-pink transition-colors shrink-0 mt-0.5 ml-1"
+                                />
+                              )
                             )}
                           </div>
                           {!isCompact && inst._maxCol <= 2 && (
@@ -581,7 +598,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                                   <Check size={8} className="text-green-600" />
                                 )}
                                 <span className="bg-ink text-white px-1 py-px uppercase text-[6px] md:text-[7px] font-black rounded-[2px]">
-                                  {inst.priority}
+                                  {scheduleKind}
                                 </span>
                               </div>
                             </div>
@@ -667,7 +684,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                               : inst.priority === "medium"
                                 ? "border-l-highlighter-yellow"
                                 : "border-l-green-400"
-                          } ${inst.instStatus === 'completed' ? 'opacity-50' : ''}`}
+                          } ${inst.isPinned ? "border-dashed ring-1 ring-highlighter-pink/40" : ""} ${inst.instStatus === 'completed' ? 'opacity-50' : ''}`}
                         >
                           <div className="flex justify-between items-start gap-2">
                             <p className="font-hand text-base md:text-lg font-bold leading-tight line-clamp-2">
@@ -693,6 +710,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                               },
                             )}
                           </p>
+                          <div className="mt-1 flex items-center gap-1 font-sketch text-[8px] uppercase opacity-50">
+                            {inst.isPinned ? <Pin size={9} /> : <Clock size={9} />}
+                            {inst.isPinned ? "Manual" : "Smart"}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -763,6 +784,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                 <span>Scheduled today</span>
                 <span className="font-bold text-ink">
                   {scheduledInstances.length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center font-sketch text-xs opacity-60">
+                <span>Manual / Smart</span>
+                <span className="font-bold text-ink">
+                  {scheduledInstances.filter((inst) => inst.isPinned).length}
+                  {" / "}
+                  {scheduledInstances.filter((inst) => !inst.isPinned).length}
                 </span>
               </div>
               <div className="flex justify-between items-center font-sketch text-xs opacity-60">

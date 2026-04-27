@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Play, Pause, Square, BarChart3, Trash2, ListTree, AlertCircle, Edit2, Check, X } from 'lucide-react';
-import type { Task, TaskHistory } from '../../types';
+import { Play, Pause, BarChart3, Trash2, ListTree, AlertCircle, Edit2, Check, X } from 'lucide-react';
+import type { Pursuit, Task, TaskHistory } from '../../types';
 import { useSound } from '../../hooks/useSound';
 
 interface TaskCardProps {
   task: Task;
+  pursuit?: Pursuit;
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDelete: (id: string) => void;
   onExploreChunks: (task: Task) => void;
@@ -12,7 +13,7 @@ interface TaskCardProps {
   onClick?: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExploreChunks, onClick }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, pursuit, onUpdate, onDelete, onExploreChunks, onClick }) => {
   const { playClick, playDelete, playTimer, playPop, playSuccess } = useSound();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -112,6 +113,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
            <BarChart3 size={12} className="opacity-40" />
            <span className="font-sketch text-xs uppercase opacity-60">{task.priority}</span>  
         </div>
+        {pursuit && (
+          <div className="flex items-center justify-between gap-2 bg-highlighter-blue/20 px-2 py-1 sketch-border border-dashed">
+            <span className="font-sketch text-[10px] uppercase opacity-50">Pursuit</span>
+            <span className="font-hand text-sm font-bold truncate">{pursuit.title}</span>
+            <span className="font-mono text-[10px] bg-ink text-white px-1">{task.xpValue || 25}xp</span>
+          </div>
+        )}
         
         <div className="flex items-center gap-4 opacity-70 font-sketch text-xs mt-2">
           <div className="flex flex-col items-start gap-1">
@@ -145,23 +153,25 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t-2 border-ink/10 border-dashed">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3 pt-3 border-t-2 border-ink/10 border-dashed">
+        <div className="flex items-center gap-2">
           {task.status !== 'completed' && (
             <>
               {task.status === 'running' ? (
                 <button 
                   onClick={(e) => { e.stopPropagation(); playTimer(); onUpdate(task.id, { status: 'paused' }); }}
-                  className="hover:text-highlighter-yellow transition-colors"
+                  className="p-2 sketch-border bg-white hover:bg-highlighter-yellow transition-colors"
+                  title="Pause timer"
                 >
-                  <Pause size={20} fill="currentColor" />
+                  <Pause size={16} fill="currentColor" />
                 </button>
               ) : (
                 <button 
                   onClick={(e) => { e.stopPropagation(); playTimer(); onUpdate(task.id, { status: 'running' }); }}
-                  className="hover:text-highlighter-yellow transition-colors"
+                  className="p-2 sketch-border bg-white hover:bg-highlighter-yellow transition-colors"
+                  title="Start timer"
                 >
-                  <Play size={20} fill="currentColor" />
+                  <Play size={16} fill="currentColor" />
                 </button>
               )}
               <button 
@@ -170,9 +180,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate, onDelete, onExplore
                   playPop();
                   setIsCompleting(true);
                 }}
-                className="hover:text-highlighter-pink transition-colors relative z-10"
+                className="flex items-center gap-1 px-3 py-2 sketch-border bg-highlighter-pink/40 hover:bg-highlighter-pink transition-colors relative z-10 font-marker text-sm"
+                title="Mark task complete"
               >
-                <Square size={16} fill="currentColor" />
+                <Check size={15} />
+                Done
               </button>
             </>
           )}

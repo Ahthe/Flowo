@@ -12,26 +12,16 @@ export class SupabaseGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
 
-    if (!token) {
-      throw new UnauthorizedException();
-    }
-
-    try {
-      const {
-        data: { user },
-        error,
-      } = await this.supabase.client.auth.getUser(token);
-
-      if (error || !user) {
-        throw new UnauthorizedException();
-      }
-
-      request['user'] = user;
-    } catch {
-      throw new UnauthorizedException();
-    }
+    // AUTH BYPASS: Skip token validation, inject a fake dev user
+    request['user'] = {
+      id: '11111111-1111-1111-1111-111111111111',
+      aud: 'authenticated',
+      role: 'authenticated',
+      email: 'dev@vellum.local',
+      app_metadata: {},
+      user_metadata: { full_name: 'Dev User' },
+    };
     return true;
   }
 

@@ -213,3 +213,233 @@ a.sketch-border:hover,
   padding: 0.25rem 1rem;
   transform: scale(1.1) rotate(1deg);
 }
+
+.vellum-prose {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+body.vellum-dark-mode {
+  --color-paper-bg: #09090b;
+  --color-ink: #f7f2f2;
+  --color-ink-light: #cfc3c5;
+  --color-highlighter-yellow: #fb7185;
+  --color-highlighter-pink: #f43f5e;
+  --color-highlighter-green: #5eead4;
+  --color-highlighter-blue: #93c5fd;
+  --color-highlighter-orange: #fda4af;
+  --color-tape: rgba(244, 63, 94, 0.18);
+  background-color: #09090b;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 18% 0%, rgba(244, 63, 94, 0.16), transparent 30%),
+    radial-gradient(circle at 85% 8%, rgba(190, 18, 60, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(24, 24, 27, 0.8), rgba(9, 9, 11, 0));
+  color: var(--color-ink);
+}
+
+body.vellum-dark-mode .bg-white,
+body.vellum-dark-mode .bg-white\/30,
+body.vellum-dark-mode .bg-white\/50,
+body.vellum-dark-mode .bg-white\/60,
+body.vellum-dark-mode .bg-white\/80,
+body.vellum-dark-mode .bg-white\/95,
+body.vellum-dark-mode .bg-paper-bg,
+body.vellum-dark-mode .bg-paper-bg\/5,
+body.vellum-dark-mode .bg-paper-bg\/30,
+body.vellum-dark-mode .bg-paper-bg\/40,
+body.vellum-dark-mode .bg-ink\/5,
+body.vellum-dark-mode .bg-ink\/10,
+body.vellum-dark-mode .bg-ink\/20,
+body.vellum-dark-mode .bg-ink\/40,
+body.vellum-dark-mode .bg-ink\/70,
+body.vellum-dark-mode .bg-ink\/\[0\.03\],
+body.vellum-dark-mode .bg-ink\/2 {
+  background-color: rgba(24, 24, 27, 0.94) !important;
+}
+
+body.vellum-dark-mode .bg-highlighter-yellow,
+body.vellum-dark-mode .bg-highlighter-yellow\/10,
+body.vellum-dark-mode .bg-highlighter-yellow\/5,
+body.vellum-dark-mode .bg-highlighter-yellow\/15,
+body.vellum-dark-mode .bg-highlighter-yellow\/20,
+body.vellum-dark-mode .bg-highlighter-yellow\/30,
+body.vellum-dark-mode .bg-highlighter-yellow\/50 {
+  background-color: rgba(244, 63, 94, 0.24) !important;
+}
+
+body.vellum-dark-mode .bg-highlighter-pink,
+body.vellum-dark-mode .bg-highlighter-pink\/5,
+body.vellum-dark-mode .bg-highlighter-pink\/10,
+body.vellum-dark-mode .bg-highlighter-pink\/20,
+body.vellum-dark-mode .bg-highlighter-pink\/30,
+body.vellum-dark-mode .bg-highlighter-pink\/40,
+body.vellum-dark-mode .bg-highlighter-pink\/60 {
+  background-color: rgba(244, 63, 94, 0.28) !important;
+}
+
+body.vellum-dark-mode .bg-highlighter-blue\/10,
+body.vellum-dark-mode .bg-highlighter-blue\/20,
+body.vellum-dark-mode .bg-highlighter-blue\/40 {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+}
+
+body.vellum-dark-mode .bg-highlighter-green\/10,
+body.vellum-dark-mode .bg-highlighter-green\/20,
+body.vellum-dark-mode .bg-highlighter-green\/40 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+
+body.vellum-dark-mode .bg-highlighter-orange\/10,
+body.vellum-dark-mode .bg-highlighter-orange\/20,
+body.vellum-dark-mode .bg-highlighter-orange\/40 {
+  background-color: rgba(251, 113, 133, 0.18) !important;
+}
+
+body.vellum-dark-mode .bg-yellow-50\/50,
+body.vellum-dark-mode .bg-yellow-50 {
+  background-color: rgba(244, 63, 94, 0.13) !important;
+}
+
+body.vellum-dark-mode .bg-red-50,
+body.vellum-dark-mode .bg-red-100,
+body.vellum-dark-mode .bg-green-50\/30,
+body.vellum-dark-mode .bg-green-100,
+body.vellum-dark-mode .bg-green-100\/40,
+body.vellum-dark-mode .bg-blue-50,
+body.vellum-dark-mode .bg-slate-50 {
+  background-color: rgba(39, 39, 42, 0.88) !important;
+}
+
+body.vellum-dark-mode .bg-ink {
+  background-color: #f7f2f2 !important;
+  color: #09090b !important;
+}
+
+body.vellum-dark-mode .bg-ink .text-white,
+body.vellum-dark-mode .bg-ink.text-white {
+  color: #09090b !important;
+}
+
+body.vellum-dark-mode .sketch-border {
+  border-color: rgba(247, 242, 242, 0.9);
+  box-shadow: 2px 3px 0px 0px rgba(244, 63, 94, 0.5);
+}
+
+body.vellum-dark-mode .sketch-border:hover {
+  box-shadow: 4px 5px 0px 0px rgba(251, 113, 133, 0.55);
+}
+
+body.vellum-dark-mode input,
+body.vellum-dark-mode select,
+body.vellum-dark-mode textarea {
+  color: var(--color-ink);
+}
+
+body.vellum-dark-mode option {
+  color: #f7f2f2;
+  background: #18181b;
+}
+
+body.vellum-dark-mode .shadow-2xl,
+body.vellum-dark-mode .shadow-xl,
+body.vellum-dark-mode .shadow-lg,
+body.vellum-dark-mode .shadow-md,
+body.vellum-dark-mode .shadow-sm {
+  --tw-shadow-color: rgba(0, 0, 0, 0.75);
+}
+
+body.vellum-dark-mode .border-ink\/5,
+body.vellum-dark-mode .border-ink\/10,
+body.vellum-dark-mode .border-ink\/20,
+body.vellum-dark-mode .border-ink\/30 {
+  border-color: rgba(247, 242, 242, 0.2) !important;
+}
+
+body.vellum-dark-mode .text-ink\/20,
+body.vellum-dark-mode .text-ink\/40,
+body.vellum-dark-mode .text-ink\/50,
+body.vellum-dark-mode .text-ink\/60,
+body.vellum-dark-mode .text-ink\/70,
+body.vellum-dark-mode .text-ink\/80 {
+  color: rgba(247, 242, 242, 0.76) !important;
+}
+
+body.vellum-dark-mode .text-highlighter-yellow {
+  color: #fb7185 !important;
+}
+
+body.vellum-dark-mode .text-highlighter-pink,
+body.vellum-dark-mode .text-red-400,
+body.vellum-dark-mode .text-red-500,
+body.vellum-dark-mode .text-red-600,
+body.vellum-dark-mode .text-red-700 {
+  color: #fb7185 !important;
+}
+
+body.vellum-dark-mode .text-green-500,
+body.vellum-dark-mode .text-green-600,
+body.vellum-dark-mode .text-green-700 {
+  color: #5eead4 !important;
+}
+
+body.vellum-dark-mode .hover\:bg-highlighter-yellow:hover,
+body.vellum-dark-mode .hover\:bg-highlighter-yellow\/20:hover,
+body.vellum-dark-mode .hover\:bg-highlighter-yellow\/30:hover,
+body.vellum-dark-mode .hover\:bg-highlighter-yellow\/50:hover {
+  background-color: #f43f5e !important;
+  color: #fff7f8 !important;
+}
+
+body.vellum-dark-mode button.bg-ink,
+body.vellum-dark-mode a.bg-ink {
+  background-color: #f43f5e !important;
+  color: #fff7f8 !important;
+  border-color: #fff7f8;
+}
+
+body.vellum-dark-mode button.bg-ink .text-white,
+body.vellum-dark-mode a.bg-ink .text-white {
+  color: #fff7f8 !important;
+}
+
+body.vellum-dark-mode button.bg-ink:hover,
+body.vellum-dark-mode a.bg-ink:hover {
+  background-color: #fb7185 !important;
+  color: #fff7f8 !important;
+}
+
+body.vellum-dark-mode .tape-effect::before {
+  background-color: rgba(244, 63, 94, 0.2);
+  border-color: rgba(251, 113, 133, 0.2);
+}
+
+body.vellum-dark-mode .highlight {
+  background: linear-gradient(
+    120deg,
+    rgba(244, 63, 94, 0) 0%,
+    rgba(244, 63, 94, 0.3) 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 40%;
+  background-position: 0 88%;
+}
+
+body.vellum-dark-mode .bg-circuit {
+  opacity: 0.08;
+}
+
+body.vellum-dark-mode input::placeholder,
+body.vellum-dark-mode textarea::placeholder {
+  color: rgba(247, 242, 242, 0.36);
+}
+
+body.vellum-dark-mode .opacity-20 {
+  opacity: 0.35;
+}
+
+body.vellum-dark-mode ::-webkit-scrollbar-thumb {
+  background: #f43f5e;
+  border-color: #09090b;
+}

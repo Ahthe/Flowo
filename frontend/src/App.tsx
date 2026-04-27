@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { supabase } from "./services/supabase";
 import { api } from "./services/api";
-import Login from "./pages/Login";
 import Sidebar from "./components/layout/Sidebar";
 import ChunkPanel from "./components/tasks/ChunkPanel";
 import CalendarView from "./views/CalendarView";
@@ -20,39 +19,78 @@ import {
   Smile,
   Cloud,
   Sun,
+  BookOpen,
   Calendar,
   ChevronRight,
   Lightbulb,
   LayoutDashboard,
   Sparkles,
+  Target,
+  Trophy,
+  X,
 } from "lucide-react";
 
-import type { Session } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 import FloatingTimer from "./components/common/FloatingTimer";
 import ArchiveView from "./views/ArchiveView";
 import { useToast } from "./context/ToastContext";
 import { useTasks } from "./hooks/useTasks";
 import JournalView from "./views/JournalView";
+import JournalLogsView from "./views/JournalLogsView";
 import GuideView from "./views/GuideView";
+import PursuitsView from "./views/PursuitsView";
 import { useSound } from "./hooks/useSound";
 
 function App() {
   const { playClick, playTabs, playPop } = useSound();
   const { showToast } = useToast();
-  const [session, setSession] = useState<Session | null>(null);
+  // AUTH BYPASS: Create a fake session so the app loads without Google OAuth
+  const fakeUser: User = {
+    id: '11111111-1111-1111-1111-111111111111',
+    aud: 'authenticated',
+    role: 'authenticated',
+    email: 'dev@vellum.local',
+    app_metadata: {},
+    user_metadata: { full_name: 'Dev User', avatar_url: '' },
+    created_at: new Date().toISOString(),
+  } as User;
+  const fakeSession: Session = {
+    access_token: 'dev-bypass-token',
+    refresh_token: 'dev-bypass-refresh',
+    expires_in: 999999,
+    expires_at: Math.floor(Date.now() / 1000) + 999999,
+    token_type: 'bearer',
+    user: fakeUser,
+  };
+  const [session, setSession] = useState<Session | null>(fakeSession);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem("vellum_dark_mode") === "true";
+  });
   const [activeTab, setActiveTab] = useState<
-    "journal" | "calendar" | "analysis" | "archive" | "guide"
+    "journal" | "pursuits" | "calendar" | "logs" | "analysis" | "archive" | "guide"
   >("guide");
 
   const {
     tasks,
+    pursuits,
+    journalEntries,
+    journalEntriesError,
+    smartScheduleSummary,
+    setSmartScheduleSummary,
+    completionSummary,
+    setCompletionSummary,
     setTasks,
     tasksRef,
     isScheduling,
     isClassifying,
     addTask,
+    savePursuit,
+    deletePursuit,
+    saveJournalEntry,
+    deleteJournalEntry,
+    resetAllData,
     updateTask,
     deleteTask,
     handleSaveLog,
@@ -110,11 +148,60 @@ function App() {
     [tasks]
   );
 
+  const todaySummary = useMemo(() => {
+    const today = new Date().toDateString();
+    const activeTasks = tasks.filter(
+      (t) => t.status !== "completed" && t.status !== "archived",
+    );
+    const scheduledTaskIds = new Set<string>();
+    const dueTaskIds = new Set<string>();
+
+    activeTasks.forEach((task) => {
+      if (task.deadline && new Date(task.deadline).toDateString() === today) {
+        dueTaskIds.add(task.id);
+      }
+
+      (task.instances || []).forEach((instance) => {
+        if (
+          instance.status !== "completed" &&
+          new Date(instance.start).toDateString() === today
+        ) {
+          scheduledTaskIds.add(task.id);
+        }
+      });
+    });
+
+    const plannedTaskIds = new Set([...dueTaskIds, ...scheduledTaskIds]);
+    const plannedTasks = activeTasks.filter((task) => plannedTaskIds.has(task.id));
+    const pursuitIds = new Set(
+      plannedTasks.map((task) => task.pursuitId).filter(Boolean),
+    );
+
+    return {
+      tasksToday: plannedTaskIds.size,
+      scheduledToday: scheduledTaskIds.size,
+      plannedXp: plannedTasks.reduce((sum, task) => sum + (task.xpValue || 0), 0),
+      pursuitsTouched: pursuitIds.size,
+    };
+  }, [tasks]);
+
   useEffect(() => {
     if (overdueCount > 0) {
       showToast(`You have ${overdueCount} overdue task${overdueCount > 1 ? 's' : ''}!`, "error");
     }
   }, [overdueCount === 0]); // Toast when first detected or when it change from 0 to something
+
+  useEffect(() => {
+    document.body.classList.toggle("vellum-dark-mode", isDarkMode);
+    localStorage.setItem("vellum_dark_mode", String(isDarkMode));
+    return () => document.body.classList.remove("vellum-dark-mode");
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    if (!completionSummary) return;
+    const timer = window.setTimeout(() => setCompletionSummary(null), 6500);
+    return () => window.clearTimeout(timer);
+  }, [completionSummary, setCompletionSummary]);
 
 
   useEffect(() => {
@@ -220,27 +307,11 @@ function App() {
     return () => window.removeEventListener("beforeunload", handleUnload);
   }, [session, tasksRef]);
 
-  const [isLoadingSession, setIsLoadingSession] = useState(true);
+  const [isLoadingSession] = useState(false);
 
+  // AUTH BYPASS: Skip Supabase auth listener, just init preferences
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        initPreferences();
-      }
-      setIsLoadingSession(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        initPreferences();
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    initPreferences();
   }, []);
 
   const initPreferences = async () => {
@@ -294,7 +365,9 @@ function App() {
     );
   }
 
-  if (!session) return <Login />;
+  // AUTH BYPASS: Skip login check
+  // if (!session) return <Login />;
+  if (!session) return null;
 
   return (
     <div className="min-h-screen bg-transparent text-ink selection:bg-highlighter-yellow/30 font-type overflow-x-hidden">
@@ -324,6 +397,9 @@ function App() {
         onUpdateProfile={handleUpdateProfile}
         preferences={preferences}
         onUpdatePreferences={handlePreferenceChange}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={() => setIsDarkMode((enabled) => !enabled)}
+        onResetEverything={resetAllData}
       />
 
       <div
@@ -338,10 +414,22 @@ function App() {
               <LayoutDashboard size={20} /> Canvas
             </button>
             <button
+              onClick={() => { playTabs(); setActiveTab("pursuits"); }}
+              className={`flex items-center gap-2 font-hand text-xl md:text-2xl transition-all ${activeTab === "pursuits" ? "text-ink scale-110 underline decoration-wavy decoration-highlighter-yellow underline-offset-4" : "opacity-50 hover:opacity-100"}`}
+            >
+              <Target size={20} /> Pursuits
+            </button>
+            <button
               onClick={() => { playTabs(); setActiveTab("calendar"); }}
               className={`flex items-center gap-2 font-hand text-xl md:text-2xl transition-all ${activeTab === "calendar" ? "text-ink scale-110 underline decoration-wavy decoration-highlighter-yellow underline-offset-4" : "opacity-50 hover:opacity-100"}`}
             >
               <Calendar size={20} /> Timeline
+            </button>
+            <button
+              onClick={() => { playTabs(); setActiveTab("logs"); }}
+              className={`flex items-center gap-2 font-hand text-xl md:text-2xl transition-all ${activeTab === "logs" ? "text-ink scale-110 underline decoration-wavy decoration-highlighter-yellow underline-offset-4" : "opacity-50 hover:opacity-100"}`}
+            >
+              <BookOpen size={20} /> Journal
             </button>
             <button
               onClick={() => { playTabs(); setActiveTab("analysis"); }}
@@ -374,6 +462,54 @@ function App() {
 
         <main className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-6 relative scroll-smooth bg-transparent">
           <div className="max-w-[1550px] mx-auto">
+            {smartScheduleSummary && (
+              <div className="mb-6 sketch-border bg-white p-4 md:p-5 shadow-lg border-dashed">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <div>
+                    <h3 className="marker-text text-2xl flex items-center gap-2">
+                      <Lightbulb className="text-highlighter-yellow" size={20} />
+                      Schedule Result
+                    </h3>
+                    <p className="font-hand text-sm opacity-60 mt-1">
+                      Smart sessions were rebuilt. Manual timeline blocks stayed protected.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSmartScheduleSummary(null)}
+                    className="font-hand text-lg opacity-50 hover:opacity-100 hover:underline self-start"
+                  >
+                    dismiss
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+                  <div className="bg-highlighter-blue/10 sketch-border border-dashed px-3 py-2">
+                    <span className="font-sketch text-[10px] uppercase opacity-40">Scheduled</span>
+                    <div className="marker-text text-2xl">{smartScheduleSummary.scheduledCount}</div>
+                  </div>
+                  <div className="bg-highlighter-pink/10 sketch-border border-dashed px-3 py-2">
+                    <span className="font-sketch text-[10px] uppercase opacity-40">Protected</span>
+                    <div className="marker-text text-2xl">{smartScheduleSummary.protectedPinnedCount}</div>
+                  </div>
+                  <div className="bg-highlighter-yellow/10 sketch-border border-dashed px-3 py-2">
+                    <span className="font-sketch text-[10px] uppercase opacity-40">Couldn’t Fit</span>
+                    <div className="marker-text text-2xl">{smartScheduleSummary.unschedulableCount}</div>
+                  </div>
+                  <div className="bg-highlighter-green/10 sketch-border border-dashed px-3 py-2">
+                    <span className="font-sketch text-[10px] uppercase opacity-40">Top Hours</span>
+                    <div className="font-hand text-xl truncate">
+                      {smartScheduleSummary.topHours.length > 0
+                        ? smartScheduleSummary.topHours.join(", ")
+                        : "No new slots"}
+                    </div>
+                  </div>
+                </div>
+                {smartScheduleSummary.unschedulableTasks.length > 0 && (
+                  <p className="font-hand text-sm mt-4 opacity-70">
+                    Couldn’t fit: {smartScheduleSummary.unschedulableTasks.join(", ")}
+                  </p>
+                )}
+              </div>
+            )}
             {activeTab === "journal" && (
               <>
                 <header className="mb-12">
@@ -383,7 +519,7 @@ function App() {
                         Today's Canvas
                       </h2>
                       <p className="font-sketch text-lg md:text-xl text-ink-light mt-4 max-w-sm mx-auto md:ml-0">
-                        Fill the page. Make it count.
+                        Today’s tasks and focused work.
                       </p>
                     </div>
                     <div className="flex flex-col items-center md:items-end gap-4 w-full md:w-auto">
@@ -412,9 +548,32 @@ function App() {
                       </div>
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+                    <div className="sketch-border bg-white px-4 py-3">
+                      <span className="font-sketch text-[10px] uppercase opacity-40">Today</span>
+                      <div className="marker-text text-2xl md:text-3xl">{todaySummary.tasksToday}</div>
+                      <p className="font-hand text-xs opacity-50">due or scheduled</p>
+                    </div>
+                    <div className="sketch-border bg-white px-4 py-3 -rotate-1">
+                      <span className="font-sketch text-[10px] uppercase opacity-40">Timeline</span>
+                      <div className="marker-text text-2xl md:text-3xl">{todaySummary.scheduledToday}</div>
+                      <p className="font-hand text-xs opacity-50">sessions placed</p>
+                    </div>
+                    <div className="sketch-border bg-white px-4 py-3 rotate-1">
+                      <span className="font-sketch text-[10px] uppercase opacity-40">Planned XP</span>
+                      <div className="marker-text text-2xl md:text-3xl">{todaySummary.plannedXp}</div>
+                      <p className="font-hand text-xs opacity-50">from today’s work</p>
+                    </div>
+                    <div className="sketch-border bg-white px-4 py-3">
+                      <span className="font-sketch text-[10px] uppercase opacity-40">Pursuits</span>
+                      <div className="marker-text text-2xl md:text-3xl">{todaySummary.pursuitsTouched}</div>
+                      <p className="font-hand text-xs opacity-50">touched today</p>
+                    </div>
+                  </div>
                 </header>
-                <JournalView
+                  <JournalView
                   tasks={tasks}
+                  pursuits={pursuits}
                   onAddTask={async (deck) => {
                     const newTask = await addTask(deck);
                     if (newTask && newTask.chunks && newTask.chunks.length > 0) {
@@ -430,6 +589,16 @@ function App() {
                   onTabChange={setActiveTab}
                 />
               </>
+            )}
+
+            {activeTab === "pursuits" && (
+              <PursuitsView
+                pursuits={pursuits}
+                tasks={tasks}
+                onSavePursuit={savePursuit}
+                onDeletePursuit={deletePursuit}
+                onTabChange={setActiveTab}
+              />
             )}
 
             {activeTab === "calendar" && (
@@ -449,7 +618,17 @@ function App() {
               />
             )}
 
-            {activeTab === "analysis" && <AnalysisView tasks={tasks} />}
+            {activeTab === "logs" && (
+              <JournalLogsView
+                entries={journalEntries}
+                error={journalEntriesError}
+                pursuits={pursuits}
+                onSaveEntry={saveJournalEntry}
+                onDeleteEntry={deleteJournalEntry}
+              />
+            )}
+
+            {activeTab === "analysis" && <AnalysisView tasks={tasks} journalEntries={journalEntries} />}
             {activeTab === "archive" && (
               <ArchiveView
                 tasks={tasks}
@@ -466,6 +645,46 @@ function App() {
         task={tasks.find((t) => t.status === "running") || null}
         onUpdate={updateTask}
       />
+
+      {completionSummary && (
+        <div className="fixed bottom-5 right-5 left-5 md:left-auto md:w-[360px] z-[95]">
+          <div className="sketch-border bg-white p-4 shadow-2xl border-highlighter-pink animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-11 h-11 sketch-border bg-highlighter-pink/40 flex items-center justify-center shrink-0">
+                  <Trophy size={22} className="text-highlighter-pink" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-sketch text-[10px] uppercase tracking-widest opacity-50">
+                    XP Logged
+                  </div>
+                  <div className="marker-text text-2xl leading-none mt-1">
+                    +{completionSummary.xpValue}{" "}
+                    {completionSummary.contributionType
+                      ? `${completionSummary.contributionType} XP`
+                      : "XP"}
+                  </div>
+                  <p className="font-hand text-base opacity-70 truncate mt-1">
+                    {completionSummary.pursuitTitle
+                      ? `Added to ${completionSummary.pursuitTitle}`
+                      : "Task completed"}
+                  </p>
+                  <p className="font-sketch text-xs opacity-40 truncate">
+                    {completionSummary.taskTitle}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCompletionSummary(null)}
+                className="p-1 opacity-40 hover:opacity-100 hover:text-highlighter-pink transition-colors"
+                aria-label="Dismiss XP summary"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingTask && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-ink/70 backdrop-blur-md">
@@ -504,7 +723,7 @@ function App() {
                 <div className="grid grid-cols-2 gap-8">
                   <div className="flex flex-col">
                     <label className="font-sketch text-xs uppercase opacity-40 ml-1">
-                      Deadline
+                      Due By
                     </label>
                     <input
                       type="datetime-local"
@@ -589,6 +808,65 @@ function App() {
                 </div>
 
                 {/* Scheduling Params */}
+                <div className="pt-4 border-t border-ink/10 grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex flex-col">
+                    <label className="font-sketch text-xs uppercase opacity-40 ml-1">
+                      Pursuit
+                    </label>
+                    <select
+                      value={editingTask.pursuitId || ""}
+                      onChange={(e) => {
+                        playClick();
+                        updateTask(editingTask.id, { pursuitId: e.target.value || undefined });
+                      }}
+                      className="font-hand text-xl p-2 border-b-2 border-ink focus:outline-none bg-transparent appearance-none cursor-pointer"
+                    >
+                      <option value="">No pursuit</option>
+                      {pursuits.map((p) => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="font-sketch text-xs uppercase opacity-40 ml-1">
+                      Contribution
+                    </label>
+                    <select
+                      value={editingTask.contributionType || "practice"}
+                      onChange={(e) => {
+                        playClick();
+                        updateTask(editingTask.id, { contributionType: e.target.value as any });
+                      }}
+                      className="font-hand text-xl p-2 border-b-2 border-ink focus:outline-none bg-transparent appearance-none cursor-pointer"
+                    >
+                      <option value="practice">Practice</option>
+                      <option value="build">Build</option>
+                      <option value="health">Health</option>
+                      <option value="pipeline">Pipeline</option>
+                      <option value="review">Review</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="font-sketch text-xs uppercase opacity-40 ml-1">
+                      Effort
+                    </label>
+                    <select
+                      value={editingTask.effortSize || "medium"}
+                      onChange={(e) => {
+                        playClick();
+                        updateTask(editingTask.id, { effortSize: e.target.value as any });
+                      }}
+                      className="font-hand text-xl p-2 border-b-2 border-ink focus:outline-none bg-transparent appearance-none cursor-pointer"
+                    >
+                      <option value="tiny">Tiny - 5 XP</option>
+                      <option value="small">Small - 10 XP</option>
+                      <option value="medium">Medium - 25 XP</option>
+                      <option value="deep">Deep - 50 XP</option>
+                      <option value="major">Major - 100 XP</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="pt-4 border-t border-ink/10 grid grid-cols-2 gap-8">
                   <div className="flex flex-col">
                     <label className="font-sketch text-xs uppercase opacity-40 ml-1">

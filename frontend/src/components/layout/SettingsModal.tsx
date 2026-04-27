@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Smile, Volume2 } from "lucide-react";
+import { AlertTriangle, Moon, RotateCcw, X, Smile, Volume2 } from "lucide-react";
 import type { UserPreferences } from "../../types";
 import { useSound } from "../../hooks/useSound";
 
@@ -14,6 +14,9 @@ interface SettingsModalProps {
   onUpdateProfile: (name: string, avatarUrl: string) => Promise<void>;
   preferences: UserPreferences;
   onUpdatePreferences: (prefs: UserPreferences) => void;
+  isDarkMode: boolean;
+  onToggleDarkMode: () => void;
+  onResetEverything: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -23,6 +26,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateProfile,
   preferences,
   onUpdatePreferences,
+  isDarkMode,
+  onToggleDarkMode,
+  onResetEverything,
 }) => {
   const { playClick, playPop } = useSound();
   const [isEditing, setIsEditing] = React.useState(false);
@@ -145,6 +151,51 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                >
                   <div className={`absolute w-3.5 h-3.5 bg-white border border-ink rounded-full transition-all duration-300 shadow-sm ${preferences.soundEnabled ? 'left-6' : 'left-1'}`} />
                </button>
+            </div>
+
+            <div className="bg-white/50 p-4 rounded sketch-border border-ink/10 flex items-center justify-between group">
+               <div className="flex items-center gap-3">
+                  <Moon size={20} className="text-highlighter-blue" />
+                  <div>
+                    <p className="font-hand text-lg">Dark Mode</p>
+                    <p className="text-[10px] font-sketch uppercase opacity-40">Obsidian paper and rose ink</p>
+                  </div>
+               </div>
+               
+               <button 
+                  onClick={() => {
+                    playClick();
+                    onToggleDarkMode();
+                  }}
+                  className={`w-12 h-6 rounded-full relative transition-colors duration-300 border-2 border-ink flex items-center ${isDarkMode ? 'bg-highlighter-blue' : 'bg-paper-bg'}`}
+               >
+                  <div className={`absolute w-3.5 h-3.5 bg-white border border-ink rounded-full transition-all duration-300 shadow-sm ${isDarkMode ? 'left-6' : 'left-1'}`} />
+               </button>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-dashed border-ink/20 pb-2">
+              <h3 className="font-hand text-xl font-bold flex items-center gap-2 text-highlighter-pink">
+                <AlertTriangle size={20} /> Danger Zone
+              </h3>
+            </div>
+            <div className="bg-white/50 p-4 rounded sketch-border border-ink/10 flex flex-col gap-3">
+              <div>
+                <p className="font-hand text-lg">Reset Everything</p>
+                <p className="text-[10px] font-sketch uppercase opacity-40">
+                  Deletes tasks, pursuits, schedules, progress logs, and journal entries
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  playClick();
+                  onResetEverything();
+                }}
+                className="w-full px-4 py-2 sketch-border bg-white hover:bg-highlighter-pink/30 transition-all font-hand text-lg text-highlighter-pink flex items-center justify-center gap-2"
+              >
+                <RotateCcw size={17} /> Reset Workspace
+              </button>
             </div>
           </div>
 

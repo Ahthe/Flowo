@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import type { Task } from "../types";
+import type { JournalEntry, Task } from "../types";
 import {
   BarChart,
   Bar,
@@ -21,14 +21,19 @@ import {
   Clock,
   CheckCircle,
   Award,
+  BookOpen,
+  Dumbbell,
   MoveRight,
+  Scale,
+  Tags,
 } from "lucide-react";
 
 interface AnalysisViewProps {
   tasks: Task[];
+  journalEntries: JournalEntry[];
 }
 
-const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
+const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks, journalEntries }) => {
   const allLogs = useMemo(() => tasks.flatMap((t) => t.history || []), [tasks]);
 
 
@@ -192,6 +197,47 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
   const hasLogData = allLogs.length > 0;
   const hasCompletions = completedCount > 0;
 
+  const journalStats = useMemo(() => {
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+
+    const trainingEntries = journalEntries.filter((entry) => entry.entryType === "training");
+    const thoughtEntries = journalEntries.filter((entry) => entry.entryType === "thought");
+    const trainingThisWeek = trainingEntries.filter(
+      (entry) => new Date(entry.loggedAt) >= weekStart,
+    ).length;
+    const setsThisWeek = trainingEntries.reduce((sum, entry) => {
+      if (new Date(entry.loggedAt) < weekStart) return sum;
+      return sum + (entry.trainingData?.exercises || []).reduce(
+        (setSum, exercise) => setSum + (exercise.sets || 0),
+        0,
+      );
+    }, 0);
+    const latestWeightEntry = trainingEntries.find(
+      (entry) => entry.trainingData?.currentPounds,
+    );
+    const latestPounds = latestWeightEntry?.trainingData?.currentPounds || "";
+    const tagCounts = new Map<string, number>();
+    journalEntries.forEach((entry) => {
+      (entry.tags || []).forEach((tag) => {
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+      });
+    });
+    const topTags = Array.from(tagCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    return {
+      thoughtCount: thoughtEntries.length,
+      trainingCount: trainingEntries.length,
+      trainingThisWeek,
+      setsThisWeek,
+      latestPounds,
+      topTags,
+    };
+  }, [journalEntries]);
+
   // Custom bar shape for energy chart
   const EnergyBar = (props: any) => {
     const { fill, x, y, width, height } = props;
@@ -230,7 +276,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
         </h2>
         <p className="font-sketch text-md md:text-lg text-ink-light mt-4">
           {hasLogData
-            ? "Your real data, visualized."
+            ? "Patterns from your actual work."
             : "Start tracking tasks to build your insights."}
         </p>
       </header>
@@ -288,6 +334,66 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ tasks }) => {
           </p>
         </div>
       </div>
+
+      <section className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6">
+        <div className="sketch-border bg-white p-5 md:p-6 shadow-lg rotate-1 hover:rotate-0 transition-transform">
+          <h3 className="font-marker text-xl md:text-2xl flex items-center gap-2 mb-4 opacity-75">
+            <Dumbbell size={19} className="text-highlighter-orange" /> Training
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="border-b-2 border-dashed border-ink/10 pb-2">
+              <span className="font-sketch text-[10px] uppercase opacity-40">This Week</span>
+              <div className="marker-text text-2xl">{journalStats.trainingThisWeek}</div>
+            </div>
+            <div className="border-b-2 border-dashed border-ink/10 pb-2">
+              <span className="font-sketch text-[10px] uppercase opacity-40">Sets</span>
+              <div className="marker-text text-2xl">{journalStats.setsThisWeek}</div>
+            </div>
+            <div className="border-b-2 border-dashed border-ink/10 pb-2">
+              <span className="font-sketch text-[10px] uppercase opacity-40 flex items-center gap-1">
+                <Scale size={11} /> Pounds
+              </span>
+              <div className="marker-text text-2xl">{journalStats.latestPounds || "—"}</div>
+            </div>
+          </div>
+          <p className="font-hand text-sm opacity-55 mt-4">
+            {journalStats.trainingCount > 0
+              ? `${journalStats.trainingCount} training logs recorded.`
+              : "Training logs will appear here after your first gym entry."}
+          </p>
+        </div>
+
+        <div className="sketch-border bg-white p-5 md:p-6 shadow-lg -rotate-1 hover:rotate-0 transition-transform">
+          <h3 className="font-marker text-xl md:text-2xl flex items-center gap-2 mb-4 opacity-75">
+            <BookOpen size={19} className="text-highlighter-blue" /> Journal
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="border-b-2 border-dashed border-ink/10 pb-2">
+              <span className="font-sketch text-[10px] uppercase opacity-40">Thoughts</span>
+              <div className="marker-text text-2xl">{journalStats.thoughtCount}</div>
+            </div>
+            <div className="border-b-2 border-dashed border-ink/10 pb-2">
+              <span className="font-sketch text-[10px] uppercase opacity-40 flex items-center gap-1">
+                <Tags size={11} /> Top Tags
+              </span>
+              <div className="font-hand text-lg truncate">
+                {journalStats.topTags.length > 0
+                  ? journalStats.topTags.map(([tag]) => tag).join(", ")
+                  : "No tags yet"}
+              </div>
+            </div>
+          </div>
+          {journalStats.topTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {journalStats.topTags.map(([tag, count]) => (
+                <span key={tag} className="font-sketch text-xs bg-highlighter-orange/20 px-2 py-1">
+                  {tag} x{count}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ─── Charts ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 pt-4">

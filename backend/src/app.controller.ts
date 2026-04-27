@@ -5,7 +5,7 @@ export class AppController {
   @Get()
   getHello() {
     return {
-      service: 'Vellum Backend',
+      service: 'Flowo Backend',
       status: 'operational',
       timestamp: new Date().toISOString(),
       env: process.env.NODE_ENV || 'development',

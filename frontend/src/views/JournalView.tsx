@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Plus, Lightbulb, ChevronRight, Coffee } from "lucide-react";
 import TaskCard from "../components/tasks/TaskCard";
-import type { Task, TaskPriority } from "../types";
+import type { ContributionType, EffortSize, Pursuit, Task, TaskPriority } from "../types";
 import { useSound } from "../hooks/useSound";
 
 interface JournalViewProps {
@@ -14,7 +14,13 @@ interface JournalViewProps {
     estimatedTime: string;
     wantsChunks: boolean;
     predictedSatisfaction: number;
+    pursuitId?: string;
+    contributionType?: ContributionType;
+    effortSize?: EffortSize;
+    scheduleOnTimeline?: boolean;
+    scheduledStart?: string;
   }) => Promise<any>;
+  pursuits: Pursuit[];
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
   onSelectTask: (task: Task) => void;
@@ -25,6 +31,7 @@ interface JournalViewProps {
 
 const JournalView: React.FC<JournalViewProps> = ({
   tasks,
+  pursuits,
   onAddTask,
   onUpdateTask,
   onDeleteTask,
@@ -35,6 +42,8 @@ const JournalView: React.FC<JournalViewProps> = ({
 }) => {
   const { playPop, playClick, playSuccess, playTabs } = useSound();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [deck, setDeck] = useState({
     description: "",
     skillLevel: "intermediate",
@@ -45,6 +54,11 @@ const JournalView: React.FC<JournalViewProps> = ({
     predictedSatisfaction: 50,
     targetSessionsPerDay: 1,
     minSpacingMinutes: 60,
+    pursuitId: "",
+    contributionType: "practice" as ContributionType,
+    effortSize: "medium" as EffortSize,
+    scheduleOnTimeline: false,
+    scheduledStart: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,8 +77,15 @@ const JournalView: React.FC<JournalViewProps> = ({
         predictedSatisfaction: 50,
         targetSessionsPerDay: 1,
         minSpacingMinutes: 60,
+        pursuitId: "",
+        contributionType: "practice",
+        effortSize: "medium",
+        scheduleOnTimeline: false,
+        scheduledStart: "",
       });
       setShowAddForm(false);
+      setShowDetails(false);
+      setShowAdvanced(false);
     }
   };
 
@@ -103,6 +124,7 @@ const JournalView: React.FC<JournalViewProps> = ({
                 className="w-full text-2xl md:text-3xl font-hand p-2 border-b-2 border-ink focus:outline-none focus:border-highlighter-pink bg-transparent"
               />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
+                {showAdvanced && (
                 <div className="space-y-6">
                   <div className="flex flex-col">
                     <label className="font-sketch text-xs uppercase opacity-40 ml-1">
@@ -146,14 +168,15 @@ const JournalView: React.FC<JournalViewProps> = ({
                             {p}
                           </button>
                         )
-                      )}
+                      )} 
                     </div>
                   </div>
                 </div>
-                <div className="space-y-6">
+                )}
+                <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${showAdvanced ? "" : "lg:col-span-2"}`}>
                   <div className="flex flex-col">
                     <label className="font-sketch text-xs uppercase opacity-40 ml-1">
-                      Deadline
+                      Due By
                     </label>
                     <input
                       type="datetime-local"
@@ -183,6 +206,92 @@ const JournalView: React.FC<JournalViewProps> = ({
                   </div>
                 </div>
 
+                <div className="pt-6 border-t border-ink/10 space-y-4 lg:col-span-2">
+                  <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={deck.scheduleOnTimeline}
+                      onChange={(e) => {
+                        playClick();
+                        const enabled = e.target.checked;
+                        setDeck({
+                          ...deck,
+                          scheduleOnTimeline: enabled,
+                          scheduledStart: enabled ? deck.scheduledStart || deck.deadline : "",
+                        });
+                      }}
+                    />
+                    <span
+                      className={`font-sketch relative text-lg uppercase flex items-center gap-3 py-2 px-4 sketch-border transition-all ${
+                        deck.scheduleOnTimeline
+                          ? "bg-highlighter-blue scale-105 -rotate-1 shadow-lg"
+                          : "bg-ink/5 opacity-60 hover:opacity-100"
+                      }`}
+                    >
+                      Put on Timeline
+                      <span
+                        className={`w-4 h-4 rounded-sm border-2 border-ink flex items-center justify-center transition-colors ${
+                          deck.scheduleOnTimeline ? "bg-ink" : "bg-transparent"
+                        }`}
+                      >
+                        {deck.scheduleOnTimeline && (
+                          <span className="text-white text-xs">✓</span>
+                        )}
+                      </span>
+                    </span>
+                  </label>
+
+                  {deck.scheduleOnTimeline && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex flex-col">
+                        <label className="font-sketch text-xs uppercase opacity-40 ml-1">
+                          Start At
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={deck.scheduledStart}
+                          onChange={(e) =>
+                            setDeck({ ...deck, scheduledStart: e.target.value })
+                          }
+                          className="font-hand text-lg p-2 border-b-2 border-ink focus:outline-none focus:border-highlighter-blue bg-transparent w-full"
+                        />
+                      </div>
+                      <div className="sketch-border bg-highlighter-blue/10 border-dashed px-4 py-3">
+                        <span className="font-sketch text-[10px] uppercase opacity-40 block">
+                          Timeline Slot
+                        </span>
+                        <p className="font-hand text-lg leading-tight">
+                          Uses your duration to block time. Smart Schedule will respect this pinned session.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-ink/10 flex flex-wrap gap-3 lg:col-span-2">
+                  <button
+                    type="button"
+                    onClick={() => { playClick(); setShowDetails((open) => !open); }}
+                    className={`px-4 py-2 sketch-border font-hand text-lg transition-all ${
+                      showDetails ? "bg-highlighter-pink/40" : "bg-white opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    {showDetails ? "Hide details" : "Add pursuit / XP / AI"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { playClick(); setShowAdvanced((open) => !open); }}
+                    className={`px-4 py-2 sketch-border font-hand text-lg transition-all ${
+                      showAdvanced ? "bg-highlighter-blue/40" : "bg-white opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    {showAdvanced ? "Hide advanced" : "Advanced scheduling"}
+                  </button>
+                </div>
+
+                {showAdvanced && (
+                <>
                 {/* ─── Repetition and Spacing (The "Best Practice" stuff) ─── */}
                 <div className="pt-6 border-t border-ink/10 grid grid-cols-2 gap-8">
                   <div className="flex flex-col">
@@ -225,7 +334,11 @@ const JournalView: React.FC<JournalViewProps> = ({
                     />
                   </div>
                 </div>
+                </>
+                )}
                 </div>
+                {showDetails && (
+                <>
                 {/* ─── Satisfaction Check (David Burns) ─── */}
                 <div className="pt-6 border-t border-ink/10">
                   <label className="font-sketch text-xs uppercase opacity-40 ml-1 block mb-2">
@@ -254,6 +367,66 @@ const JournalView: React.FC<JournalViewProps> = ({
                     "Predict how good you'll feel after finishing this." — Dr. David Burns
                   </p>
                 </div>
+              <div className="pt-6 border-t border-ink/10 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex flex-col">
+                  <label className="font-sketch text-xs uppercase opacity-40 ml-1">
+                    Pursuit
+                  </label>
+                  <select
+                    value={deck.pursuitId}
+                    onChange={(e) => {
+                      playClick();
+                      setDeck({ ...deck, pursuitId: e.target.value });
+                    }}
+                    className="font-hand text-lg p-2 border-b-2 border-ink focus:outline-none bg-transparent appearance-none cursor-pointer"
+                  >
+                    <option value="">No pursuit</option>
+                    {pursuits.map((p) => (
+                      <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  <label className="font-sketch text-xs uppercase opacity-40 ml-1">
+                    Contribution
+                  </label>
+                  <select
+                    value={deck.contributionType}
+                    onChange={(e) => {
+                      playClick();
+                      setDeck({ ...deck, contributionType: e.target.value as ContributionType });
+                    }}
+                    className="font-hand text-lg p-2 border-b-2 border-ink focus:outline-none bg-transparent appearance-none cursor-pointer"
+                  >
+                    <option value="practice">Practice</option>
+                    <option value="build">Build</option>
+                    <option value="health">Health</option>
+                    <option value="pipeline">Pipeline</option>
+                    <option value="review">Review</option>
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  <label className="font-sketch text-xs uppercase opacity-40 ml-1">
+                    Effort
+                  </label>
+                  <select
+                    value={deck.effortSize}
+                    onChange={(e) => {
+                      playClick();
+                      setDeck({ ...deck, effortSize: e.target.value as EffortSize });
+                    }}
+                    className="font-hand text-lg p-2 border-b-2 border-ink focus:outline-none bg-transparent appearance-none cursor-pointer"
+                  >
+                    <option value="tiny">Tiny - 5 XP</option>
+                    <option value="small">Small - 10 XP</option>
+                    <option value="medium">Medium - 25 XP</option>
+                    <option value="deep">Deep - 50 XP</option>
+                    <option value="major">Major - 100 XP</option>
+                  </select>
+                </div>
+              </div>
+                </>
+                )}
               <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-ink/10 gap-6">
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <input
@@ -348,6 +521,7 @@ const JournalView: React.FC<JournalViewProps> = ({
           >
             <TaskCard
               task={task}
+              pursuit={pursuits.find((p) => p.id === task.pursuitId)}
               onUpdate={onUpdateTask}
               onDelete={onDeleteTask}
               onExploreChunks={onSelectTask}

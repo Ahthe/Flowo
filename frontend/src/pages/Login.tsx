@@ -47,7 +47,7 @@ const Login: React.FC = () => {
             <Logo size={48} />
           </div>
           <h1 className="marker-text text-4xl -rotate-2 group-hover:rotate-0 transition-transform">
-            Vellum
+            Flowo
           </h1>
         </div>
       </nav>
@@ -89,7 +89,7 @@ const Login: React.FC = () => {
                 <span className="absolute inset-0 bg-highlighter-pink/30 skew-x-12 transform -rotate-1"></span>
                 <span className="relative font-bold">masterpiece</span>
               </span>. 
-              Vellum turns your chaos into a curated journal of focus.
+              Flowo turns your chaos into a curated journal of focus.
             </p>
 
             <div className="flex items-center justify-center lg:justify-start gap-4 font-sketch text-xs opacity-50 uppercase tracking-widest">
@@ -163,7 +163,7 @@ const Login: React.FC = () => {
           </a>
         </div>
         <p className="font-sketch text-xs opacity-40">
-           &copy; {new Date().getFullYear()} Vellum. Crafted with <span className="text-red-400">♥</span> by Eman.
+           &copy; {new Date().getFullYear()} Flowo. Crafted with <span className="text-red-400">♥</span> by Eman.
         </p>
       </footer>
 
