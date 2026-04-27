@@ -1,429 +1,395 @@
-<h1 align="center" style="font-size: 60px;">Vellum</h1>
+# Flowo
 
-<p align="center">
-  <strong>🏆 Second Place Winner — Build4Students Hackathon 2026</strong>
-</p>
+Flowo is a personal productivity system for turning long-term goals into scheduled work, tracked XP, reflections, and progress insights.
 
-<p align="center">
-  <img src="https://github.com/emanalytic/Vellum/blob/main/image.png" width="700" alt="Vellum Preview"/>
-</p>
+It combines a task canvas, goal/pursuit system, timeline scheduler, journal, training log, insights dashboard, and archive into one workflow.
 
-<p align="center">
-  <a href="https://www.vellum.foo/">🔗 Try it out here</a> |
-  <a href="https://devpost.com/software/vellum-tgv241"> 🎨 Devpost Submission</a>
-</p>
+## What Flowo Solves
 
-A productivity application that helps you plan, schedule, and track your work. It goes beyond a simple to-do list by automatically arranging tasks into your calendar based on when you actually focus best.
+Most productivity tools stop at tasks. Flowo connects the full loop:
 
-_**Note:** “Vellum” is a fine-quality parchment historically used for important manuscripts._(❁´◡`❁)
+1. Define what you are pursuing.
+2. Break that pursuit into real daily tasks.
+3. Schedule the work onto a timeline.
+4. Complete the work and earn XP.
+5. Review progress through heatmaps, logs, and insights.
+6. Keep a record of completed work in the vault.
 
----
+Example:
 
-## Table of Contents
+- Pursuit: `Reach 180 lbs and become strong`
+- Weekly focus: `Hit protein daily and train 4 times`
+- Canvas tasks: `Chest workout`, `Meal prep`, `Walk 30 minutes`
+- Timeline: scheduled blocks for when the work should happen
+- Journal: training logs and personal reflections
+- Insights: training count, sets, current pounds, top tags, focus patterns
 
-- [Overview](#overview)
-- [How the Scheduler Works (with example)](#how-the-scheduler-works)
-- [Calendar Layout Algorithm](#calendar-layout-algorithm)
-- [AI Task Breakdown](#ai-task-breakdown)
-- [Project Structure](#project-structure)
-- [Database Schema](#database-schema)
-- [API Reference](#api-reference)
-- [Technology Stack](#technology-stack)
-- [Getting Started](#getting-started)
-- [Contributing](#contributing)
+## Main Features
 
----
+### Canvas
 
-## Overview
+Canvas is the daily task board. You can create tasks with:
 
-Most productivity tools treat all tasks as equal and ignore the fact that your energy changes throughout the day. Vellum addresses this by sitting between your task list and your calendar.
+- Due date and duration
+- Optional timeline placement
+- Priority and skill level
+- Pursuit link
+- Contribution type: build, practice, health, pipeline, review
+- Effort size and XP value
+- Optional AI task breakdown
 
-The system does three things:
+Completing a task can award XP to the linked pursuit and shows a small completion summary.
 
-1. **Breaks down big tasks** into smaller steps using AI, so you know where to start.
-2. **Schedules those tasks automatically** into time slots where you historically focus best.
-3. **Tracks your focus sessions** so the scheduler gets smarter over time.
+### Pursuits
 
----
+Pursuits are long-term goals such as:
 
-## How the Scheduler Works
+- Build an AI voice agent startup
+- Reach 180 lbs
+- Improve LeetCode skill
+- Apply to jobs consistently
 
-When you press the "Smart Schedule" button, here is exactly what happens
+Each pursuit supports:
 
-### Step 1: Cleanup
+- Why, target, category, deadline
+- Weekly focus
+- Weekly XP target
+- Weekly countdown ending Monday at 12:00 AM local time
+- Total XP
+- Active task count
+- 35-day heatmap based on completed work
+- Inactivity warning after 2+ days without completed work
 
-Before doing anything, the scheduler clears stale data:
+The inactivity warning is intentionally not destructive. It offers actions like add task, edit week, pause, or delete.
 
-- Any past instances that were never completed get marked as `missed`.
-- Any future un-pinned instances get deleted. Pinned instances (ones you manually placed) are left alone.
+### Timeline
 
-This means each schedule run starts fresh, without duplicating old entries.
+Timeline shows scheduled sessions for the day/week.
 
-### Step 2: Sort tasks by urgency
+It supports:
 
-All active tasks (not completed, not archived) are sorted. The sort works on two levels:
+- Manual pinned tasks
+- Smart scheduled tasks
+- Visual difference between manual and smart blocks
+- Early Bird view starting at 4:00 AM
+- Smart Schedule feedback showing scheduled, protected, and unscheduled work
 
-1. **Priority first.** High (weight 3) before Medium (weight 2) before Low (weight 1).
-2. **Deadline second.** If two tasks have the same priority, the one with the earlier deadline goes first.
+Manual timeline blocks are protected when Smart Schedule runs.
 
-This means a High-priority task due tomorrow will always be scheduled before a Low-priority task due next week.
+### Smart Schedule
 
-### Step 3: Build the energy profile
+Smart Schedule places active tasks into open timeline slots using:
 
-The scheduler calls a Postgres function (`get_user_peak_hours`) that counts how many focus sessions you have logged at each hour of the day, using your timezone. This produces an array of 24 numbers — one per hour.
+- Priority
+- Deadline
+- Estimated duration
+- Availability windows
+- Past focus-session patterns
+- Task spacing rules
+- Existing pinned/manual sessions
 
-For example, if you tend to log work at 10 AM, 11 AM, and 2 PM, those hours will have higher counts. If you have never logged any sessions, all hours are treated equally (score of 5).
+It clears stale unpinned schedule blocks and keeps pinned blocks protected.
 
-### Step 4: Generate and score time slots
+### Journal
 
-For each day (default: 3 days ahead), the scheduler:
+Journal has two entry types in one unified system:
 
-1. Reads your availability window for that day of the week (e.g., Monday 9:00–17:00).
-2. Breaks that window into 15-minute slots.
-3. Scores each slot using the energy profile from Step 3.
-4. Sorts slots by score, highest first.
+- Thought entries for writing, notes, ideas, reflections, and tags
+- Training entries for gym logs
 
-This means the best hours are tried first.
+Training logs support:
 
-### Step 5: Place each task
+- Muscle group
+- Current pounds/bodyweight
+- Exercise rows
+- Sets, reps, weight, unit
+- Session notes
+- Last logged exercise hint
 
-For each task, the scheduler walks through the scored slots and tries to place it. A slot is accepted only if **all** of these checks pass:
+Journal cards stay short on the main page. Use the View button to read the full entry.
 
-| Check                 | What it does                                                                           |
-| --------------------- | -------------------------------------------------------------------------------------- |
-| **Fits in window**    | The task's duration does not run past the end of your availability                     |
-| **Before deadline**   | The slot ends before the task's deadline                                               |
-| **No collision**      | The slot does not overlap with any already-scheduled instance                          |
-| **Spacing respected** | The slot is far enough from the same task's other sessions (default: 60 minutes apart) |
+### Insights
 
-If a slot passes all four checks, the task is placed there. If the task allows multiple sessions per day (`targetSessionsPerDay`), the scheduler continues looking for more slots that same day.
+Insights currently shows:
 
-### Walkthrough Example
+- Completed tasks
+- Deep work minutes
+- Peak focus hour
+- Average focus session
+- Energy-by-hour chart
+- Completion velocity
+- Satisfaction scorecard
+- Training logs this week
+- Sets this week
+- Latest current pounds
+- Thought count
+- Top journal tags
 
-Imagine you have two tasks:
+### Vault
 
-- **Task A**: "Write essay" — High priority, deadline in 2 days, estimated 60 minutes, 1 session/day.
-- **Task B**: "Review notes" — Medium priority, no deadline, estimated 30 minutes, 2 sessions/day.
+Vault is the completed/history area. You can search completed work and export archive data.
 
-Your availability is 9:00 AM to 5:00 PM, and your energy profile shows you focus best at 10 AM and 2 PM.
+### Settings
 
-Here is what happens:
+Settings includes:
 
-```
-1. Tasks are sorted: [Task A (high), Task B (medium)]
+- Profile editing
+- Sound toggle
+- Dark mode
+- Danger Zone reset
 
-2. Energy profile scores (simplified):
-   10 AM = 8,  2 PM = 7,  9 AM = 3,  11 AM = 4, ...
+Reset deletes tasks, pursuits, schedules, progress logs, chunks, and journal entries. Preferences remain.
 
-3. Scored slots for Day 1 (sorted by energy):
-   10:00 (score 8), 10:15 (score 8), 10:30 (score 8), 10:45 (score 8),
-   14:00 (score 7), 14:15 (score 7), ...
+## Important Current Status
 
-4. Place Task A (60 min, 1 session/day):
-   - Try 10:00–11:00 → no collision, no spacing issue → PLACED
-   - 1 session done for today, move on.
+Flowo is ready for private use and local testing.
 
-5. Place Task B (30 min, 2 sessions/day):
-   - Try 10:00 → collision with Task A → skip
-   - Try 10:15 → collision with Task A → skip
-   - ...
-   - Try 11:00–11:30 → no collision → PLACED (session 1)
-   - Try 14:00–14:30 → no collision, 3 hours from session 1
-     (spacing = 60 min, 3 hours > 60 min) → PLACED (session 2)
-   - 2 sessions done for today, move on.
+Before public deployment, restore real Supabase authentication. The current app uses a dev auth bypass so the system can be tested without Google login. Do not ship that bypass as a public multi-user app.
 
-Result for Day 1:
-  10:00–11:00  Task A "Write essay"
-  11:00–11:30  Task B "Review notes"
-  14:00–14:30  Task B "Review notes"
-```
+## Did We Remove Any README Functionality?
 
-The same process repeats for Day 2 and Day 3.
+No core productivity functionality from the old README was intentionally removed.
 
----
+Still present:
 
-## Calendar Layout Algorithm
+- AI task breakdown
+- Smart scheduler
+- Calendar/timeline layout
+- Focus timer
+- Progress logs
+- Insights
+- Archive/Vault
+- Supabase-backed backend
+- Groq-backed AI endpoint
 
-When you open the calendar day view, the frontend needs to display overlapping events side by side (like Google Calendar does). This is handled by the `positionedInstances` function in `frontend/src/views/CalendarView.tsx`.
+Changed or updated:
 
-### How it works
-
-The algorithm runs in three passes over the day's instances (already sorted by start time):
-
-**Pass 1 — Pre-parse dates.** Every instance's `start` and `end` strings are converted to numbers (milliseconds) once. This avoids creating `new Date()` objects repeatedly inside loops.
-
-**Pass 2 — Build clusters.** Walk through instances in order. If the current instance starts before the running `clusterMaxEnd`, it belongs to the current cluster (it overlaps with something). Otherwise, start a new cluster. The key detail: `clusterMaxEnd` is updated with a simple comparison (`if iEnd > clusterMaxEnd`), not by re-scanning the whole cluster.
-
-**Pass 3 — Assign columns.** For each cluster, assign instances to columns. A column tracks only the end-time of the last item placed in it (a single number, not an array of objects). For each instance, try existing columns. If the instance starts after a column's end-time, it fits in that column. Otherwise, create a new column.
-
-### Performance
-
-| Step            | Time Complexity      | Why                                                          |
-| --------------- | -------------------- | ------------------------------------------------------------ |
-| Pre-parse dates | O(N)                 | One pass, one `Map.set()` per instance                       |
-| Build clusters  | O(N)                 | One pass, one comparison per instance                        |
-| Assign columns  | O(N x C)             | N = instances, C = max overlapping columns (usually 2–3)     |
-| **Total**       | **O(N)** in practice | C is bounded by screen width, so N x C is effectively linear |
-
-(!) The worst can be O(N^2) if we re-scanned the entire cluster and created a new `Date` object for every item on every iteration.
-
----
-
-## AI Task Breakdown
-
-When you add a task and choose "AI Breakdown", the backend sends your task description to Groq (Llama 3.3 70B) and asks it to split the task into 1–5 smaller steps.
-
-### How the prompt is calibrated
-
-The AI adjusts its time estimates based on the skill level you select:
-
-| Skill Level             | Multiplier    | Chunk Detail                 |
-| ----------------------- | ------------- | ---------------------------- |
-| Total Novice / Beginner | 1.5x longer   | More detailed, smaller steps |
-| Intermediate            | 1x (baseline) | Standard chunking            |
-| Advanced / Master       | 0.7x shorter  | Broader, fewer steps         |
-
-### Rate limiting
-
-Each user is limited to **3 AI calls per day**. This is enforced at the database level using a Postgres function (`increment_ai_usage`). The function inserts a usage row, counts today's rows, and raises an exception if the count exceeds 3. This is done atomically to prevent race conditions where two simultaneous requests could both slip through.
-
-
----
+- The product name changed from Vellum to Flowo.
+- The app is now much broader than the original README: Pursuits, XP, heatmaps, Journal, Training logs, dark mode, reset flow, and weekly pursuit focus were added.
+- The old README claimed normal Supabase Auth usage. The current code has a dev auth bypass, so the README now calls that out clearly.
+- Old hackathon/live-link wording was removed because it described the original Vellum project, not this current Flowo version.
 
 ## Project Structure
 
-```
-vellum/
+```text
+Flowo/
 ├── backend/
+│   ├── supabase_schema.sql
 │   └── src/
-│       ├── ai/                  # AI task breakdown (Groq/Llama)
-│       │   ├── ai.service.ts        # Prompt, parsing, rate limit check
-│       │   ├── ai.controller.ts     # POST /ai/classify-task
-│       │   └── dto/                 # Request/response shapes
-│       ├── scheduler/           # Auto-scheduling engine
-│       │   ├── scheduler.service.ts # All scheduling logic
-│       │   └── scheduler.controller.ts  # POST /scheduler/schedule
-│       ├── tasks/               # Task CRUD and instances
-│       │   ├── tasks.service.ts     # Database operations
-│       │   ├── tasks.controller.ts  # REST endpoints
-│       │   ├── dto/                 # Validation classes
-│       │   └── types.ts             # TypeScript interfaces
-│       ├── auth/                # JWT guard, user extraction
-│       ├── supabase/            # Supabase client factory
-│       └── main.ts              # App bootstrap
+│       ├── ai/                 # AI task breakdown using Groq
+│       ├── scheduler/          # Smart scheduling engine
+│       ├── tasks/              # Tasks, pursuits, journal entries, preferences
+│       ├── supabase/           # Supabase clients and guard
+│       └── main.ts
 │
 ├── frontend/
 │   └── src/
 │       ├── views/
-│       │   ├── CalendarView.tsx      # Day/week calendar with layout algorithm
-│       │   ├── JournalView.tsx       # Task list ("sketchbook" style)
-│       │   ├── AnalysisView.tsx      # Charts and productivity insights
-│       │   ├── ArchiveView.tsx       # Completed/archived tasks
-│       │   └── GuideView.tsx         # Onboarding help
+│       │   ├── JournalView.tsx      # Canvas/task board
+│       │   ├── PursuitsView.tsx     # Long-term goals and XP
+│       │   ├── CalendarView.tsx     # Timeline
+│       │   ├── JournalLogsView.tsx  # Thought journal and training log
+│       │   ├── AnalysisView.tsx     # Insights
+│       │   ├── ArchiveView.tsx      # Vault
+│       │   └── GuideView.tsx
 │       ├── components/
-│       │   ├── tasks/TaskCard.tsx     # Individual task card
-│       │   └── tasks/ChunkPanel.tsx   # Sub-task management
 │       ├── hooks/
-│       │   ├── useTasks.ts           # All task operations (add, update, delete, schedule)
-│       │   └── useSound.ts           # UI sound effects
 │       ├── services/
-│       │   ├── api.ts                # HTTP calls to backend
-│       │   └── supabase.ts           # Supabase client
-│       ├── types/index.ts            # Shared TypeScript types
-│       └── App.tsx                   # Root component, routing, auth
+│       ├── types/
+│       └── App.tsx
 ```
 
----
+## Database Tables
 
-## Database Schema
+The Supabase schema is in:
 
-### Core Tables
+```text
+backend/supabase_schema.sql
+```
 
-| Table              | Purpose                        | Key Columns                                                                                                  |
-| ------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `tasks`            | Stores every task              | `id`, `description`, `priority`, `skill_level`, `deadline`, `estimated_time`, `status`, `total_time_seconds` |
-| `chunks`           | Sub-tasks within a task        | `id`, `task_id`, `chunk_name`, `duration`, `completed`                                                       |
-| `task_instances`   | Scheduled calendar slots       | `id`, `task_id`, `user_id`, `start_time`, `end_time`, `status`, `is_pinned`                                  |
-| `progress_logs`    | Logged focus sessions          | `id`, `task_id`, `user_id`, `start_time`, `end_time`, `duration_seconds`                                     |
-| `user_preferences` | Availability windows, settings | `user_id`, `available_hours` (JSON), `auto_schedule`, `sound_enabled`                                        |
-| `ai_usage`         | Tracks daily AI calls          | `user_id`, `created_at`                                                                                      |
+Core tables:
 
-### Important Instance Statuses
+| Table | Purpose |
+| --- | --- |
+| `tasks` | Canvas tasks and pursuit XP metadata |
+| `pursuits` | Long-term goals and weekly focus |
+| `journal_entries` | Thought journal and training logs |
+| `chunks` | AI/manual task subtasks |
+| `task_instances` | Timeline schedule blocks |
+| `progress_logs` | Focus-session logs |
+| `user_preferences` | Availability, sound, and settings |
+| `ai_usage` | Daily AI usage tracking |
 
-| Status      | Meaning                                   |
-| ----------- | ----------------------------------------- |
-| `scheduled` | Placed on calendar, not yet done          |
-| `completed` | User finished the session                 |
-| `missed`    | The time passed without the user starting |
-| `skipped`   | User manually removed it                  |
+Run the schema in Supabase before using the app.
 
-### Indexes
+## API Overview
 
-The `task_instances` table has two indexes for fast lookups:
-
-- `idx_task_instances_user_time` on `(user_id, start_time, end_time)` — used when the scheduler checks for collisions.
-- `idx_task_instances_parent_id` on `(task_id)` — used when deleting a task and its instances.
-
----
-
-## API Reference
-
-All endpoints require a Bearer token in the `Authorization` header. The token comes from Supabase Auth.
+All backend routes live under the NestJS API.
 
 ### Tasks
 
-| Method | Endpoint     | What it does                                                              |
-| ------ | ------------ | ------------------------------------------------------------------------- |
-| GET    | `/tasks`     | Get all tasks for the current user, including chunks, logs, and instances |
-| POST   | `/tasks`     | Create or update a task (upsert). Send the full task object.              |
-| DELETE | `/tasks/:id` | Delete a task and all its related data (chunks, instances, logs)          |
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/tasks` | Fetch tasks with chunks, logs, and instances |
+| POST | `/tasks` | Create/update task |
+| DELETE | `/tasks/:id` | Delete task |
 
-### Chunks (sub-tasks)
+### Pursuits
 
-| Method | Endpoint           | What it does          |
-| ------ | ------------------ | --------------------- |
-| DELETE | `/tasks/chunk/:id` | Delete a single chunk |
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/tasks/pursuits` | Fetch pursuits |
+| POST | `/tasks/pursuits` | Create/update pursuit |
+| DELETE | `/tasks/pursuits/:pursuitId` | Delete pursuit and unlink tasks |
 
-### Instances (calendar slots)
+### Journal
 
-| Method | Endpoint                  | What it does                         |
-| ------ | ------------------------- | ------------------------------------ |
-| POST   | `/tasks/instance`         | Create a manually pinned instance    |
-| DELETE | `/tasks/instance/:id`     | Remove an instance from the calendar |
-| PATCH  | `/tasks/instance/:id/pin` | Pin or unpin an instance             |
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/tasks/journal-entries` | Fetch journal/training entries |
+| POST | `/tasks/journal-entries` | Create/update entry |
+| DELETE | `/tasks/journal-entries/:entryId` | Delete entry |
 
-### Progress Logs
+### Timeline
 
-| Method | Endpoint             | What it does                  |
-| ------ | -------------------- | ----------------------------- |
-| POST   | `/tasks/log/:taskId` | Log a completed focus session |
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/tasks/instance` | Create pinned timeline block |
+| DELETE | `/tasks/instance/:instanceId` | Remove timeline block |
+| PATCH | `/tasks/instance/:instanceId/pin` | Pin/unpin timeline block |
 
-### Preferences
+### Scheduler and AI
 
-| Method | Endpoint             | What it does                             |
-| ------ | -------------------- | ---------------------------------------- |
-| GET    | `/tasks/preferences` | Get user availability hours and settings |
-| POST   | `/tasks/preferences` | Update availability hours and settings   |
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/scheduler/schedule` | Run Smart Schedule |
+| POST | `/ai/classify-task` | AI task breakdown |
 
-### Scheduler
+### Preferences and Reset
 
-| Method | Endpoint              | What it does                                                   |
-| ------ | --------------------- | -------------------------------------------------------------- |
-| POST   | `/scheduler/schedule` | Run the auto-scheduler. Accepts `{ timezone, daysToSchedule }` |
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/tasks/preferences` | Fetch preferences |
+| POST | `/tasks/preferences` | Update preferences |
+| DELETE | `/tasks/reset-all` | Reset workspace data |
 
-### AI
-
-| Method | Endpoint            | What it does                                                          |
-| ------ | ------------------- | --------------------------------------------------------------------- |
-| POST   | `/ai/classify-task` | Break a task into chunks. Accepts `{ task_description, skill_level }` |
-
----
-
-## Technology Stack
+## Tech Stack
 
 ### Frontend
 
-| Technology    | What it does here                                  |
-| ------------- | -------------------------------------------------- |
-| React 19      | UI framework                                       |
-| TypeScript    | Type safety across the entire frontend             |
-| Tailwind CSS  | Custom design system with a "sketchbook" theme     |
-| Framer Motion | Page transitions and micro-animations              |
-| Recharts      | Focus distribution, velocity, and energy charts    |
-| Supabase JS   | Authentication (login, signup, session management) |
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- Recharts
+- Framer Motion
+- Lucide React
+- Supabase JS
 
 ### Backend
 
-| Technology | What it does here                                                |
-| ---------- | ---------------------------------------------------------------- |
-| NestJS     | REST API framework with dependency injection                     |
-| TypeScript | Type safety across the entire backend                            |
-| Supabase   | PostgreSQL database, Row Level Security, auth token verification |
-| Groq SDK   | AI inference (Llama 3.3 70B) for task breakdown                  |
-| Luxon      | Timezone-aware date math in the scheduler                        |
+- NestJS
+- TypeScript
+- Supabase/Postgres
+- Groq SDK
+- Luxon
 
----
+## Local Setup
 
-## Getting Started
-
-### What you need
-
-- Node.js 18 or higher
-- A Supabase project (free tier works)
-- A Groq API key (for AI features)
-
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
-git clone https://github.com/emanalytic/vellum.git
-cd vellum
+git clone git@github.com:Ahthe/Flowo.git
+cd Flowo
 ```
 
-### 2. Set up the backend
+### 2. Supabase
+
+Create a Supabase project, then run:
+
+```text
+backend/supabase_schema.sql
+```
+
+in the Supabase SQL Editor.
+
+### 3. Backend
 
 ```bash
 cd backend
 npm install
 ```
 
-Create a `.env` file in the `backend/` folder:
+Create `backend/.env`:
 
-```
+```env
 PORT=3000
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 API_KEY=your-groq-api-key
 ```
 
-Start the backend:
+Start backend:
 
 ```bash
 npm run start:dev
 ```
 
-### 3. Set up the frontend
+### 4. Frontend
 
 ```bash
 cd ../frontend
 npm install
 ```
 
-Create a `.env` file in the `frontend/` folder:
+Create `frontend/.env`:
 
-```
+```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_API_URL=http://localhost:3000
 ```
 
-Start the frontend:
+Start frontend:
 
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`.
+Open:
 
----
+```text
+http://localhost:5173
+```
 
-## Contributing
+## Deployment Notes
 
-Contributions are welcome. Here is how to get started:
+Recommended Vercel setup:
 
-1. Fork the repository and clone your fork locally.
-2. Create a branch for your change (`git checkout -b fix/your-change`).
-3. Make your changes. See the table below to find the right files.
-4. Test locally run both the backend (`npm run start:dev`) and frontend (`npm run dev`) and make sure nothing is broken.
-5. Commit with a clear message describing what you changed and why.
-6. Open a pull request against `main`.
+- Deploy `frontend/` as a Vite app.
+- Deploy `backend/` as a NestJS backend project.
+- Set `VITE_API_URL` in the frontend project to the deployed backend URL.
+- Keep `SUPABASE_SERVICE_ROLE_KEY` only in the backend environment variables.
 
-### Guidelines
+Before public deployment:
 
-- Keep it simple. Plain code is better than clever code.
-- If you add a new backend endpoint, add the matching call in `frontend/src/services/api.ts`.
-- Run `npx tsc --noEmit` in both `backend/` and `frontend/` before pushing to catch type errors early.
+- Remove the dev auth bypass.
+- Restore real Supabase Auth session handling.
+- Review RLS policies for production.
 
----
+## Development Commands
 
-Author: Eman Nisar ([@emanalytic](https://github.com/emanalytic))
-# Flowo
+Frontend:
+
+```bash
+cd frontend
+npm run build
+```
+
+Backend:
+
+```bash
+cd backend
+npm run build
+```
+
