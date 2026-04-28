@@ -273,7 +273,7 @@ function App() {
     const handleUnload = () => {
       const runningTask = tasksRef.current.find((t) => t.status === "running");
       if (runningTask && session) {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/+$/, "");
         fetch(`${apiUrl}/tasks`, {
           method: "POST",
           headers: {
