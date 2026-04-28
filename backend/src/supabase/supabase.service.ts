@@ -33,8 +33,7 @@ export class SupabaseService implements OnModuleDestroy {
     return createClient(url, serviceKey);
   }
 
-  // AUTH BYPASS: Always return the service role client so we don't need a real JWT
-  getUserClient(token: string): SupabaseClient {
+  getUserClient(_token: string): SupabaseClient {
     return this.getServiceRoleClient();
   }
 

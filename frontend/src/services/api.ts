@@ -6,13 +6,18 @@ import type {
   Pursuit,
   JournalEntry,
 } from "../types";
+import { supabase } from "./supabase";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-// AUTH BYPASS: Use static dev token instead of real Supabase session
 async function getHeaders() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.access_token) {
+    throw new Error("You need to sign in again.");
+  }
+
   return {
-    Authorization: `Bearer dev-bypass-token`,
+    Authorization: `Bearer ${data.session.access_token}`,
     "Content-Type": "application/json",
   };
 }

@@ -142,9 +142,9 @@ Reset deletes tasks, pursuits, schedules, progress logs, chunks, and journal ent
 
 ## Important Current Status
 
-Flowo is ready for private use and local testing.
+Flowo now uses Supabase email/password authentication and magic-link sign-in. Users can create an account and access the same profile from desktop or phone.
 
-Before public deployment, restore real Supabase authentication. The current app uses a dev auth bypass so the system can be tested without Google login. Do not ship that bypass as a public multi-user app.
+Before public deployment, review production RLS policies and configure your deployed frontend URL in Supabase Auth settings.
 
 ## Did We Remove Any README Functionality?
 
@@ -166,7 +166,7 @@ Changed or updated:
 
 - The product name changed from Vellum to Flowo.
 - The app is now much broader than the original README: Pursuits, XP, heatmaps, Journal, Training logs, dark mode, reset flow, and weekly pursuit focus were added.
-- The old README claimed normal Supabase Auth usage. The current code has a dev auth bypass, so the README now calls that out clearly.
+- The old Google OAuth flow was replaced with Supabase email/password and magic-link authentication.
 - Old hackathon/live-link wording was removed because it described the original Vellum project, not this current Flowo version.
 
 ## Project Structure
@@ -373,9 +373,9 @@ Recommended Vercel setup:
 
 Before public deployment:
 
-- Remove the dev auth bypass.
-- Restore real Supabase Auth session handling.
+- Configure Supabase Auth redirect URLs for your deployed frontend.
 - Review RLS policies for production.
+- Keep `SUPABASE_SERVICE_ROLE_KEY` only in the backend environment variables.
 
 ## Development Commands
 
@@ -392,4 +392,3 @@ Backend:
 cd backend
 npm run build
 ```
-

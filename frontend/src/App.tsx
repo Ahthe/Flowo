@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { supabase } from "./services/supabase";
 import { api } from "./services/api";
+import Login from "./pages/Login";
 import Sidebar from "./components/layout/Sidebar";
 import ChunkPanel from "./components/tasks/ChunkPanel";
 import CalendarView from "./views/CalendarView";
@@ -30,7 +31,7 @@ import {
   X,
 } from "lucide-react";
 
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 import FloatingTimer from "./components/common/FloatingTimer";
 import ArchiveView from "./views/ArchiveView";
 import { useToast } from "./context/ToastContext";
@@ -44,25 +45,7 @@ import { useSound } from "./hooks/useSound";
 function App() {
   const { playClick, playTabs, playPop } = useSound();
   const { showToast } = useToast();
-  // AUTH BYPASS: Create a fake session so the app loads without Google OAuth
-  const fakeUser: User = {
-    id: '11111111-1111-1111-1111-111111111111',
-    aud: 'authenticated',
-    role: 'authenticated',
-    email: 'dev@vellum.local',
-    app_metadata: {},
-    user_metadata: { full_name: 'Dev User', avatar_url: '' },
-    created_at: new Date().toISOString(),
-  } as User;
-  const fakeSession: Session = {
-    access_token: 'dev-bypass-token',
-    refresh_token: 'dev-bypass-refresh',
-    expires_in: 999999,
-    expires_at: Math.floor(Date.now() / 1000) + 999999,
-    token_type: 'bearer',
-    user: fakeUser,
-  };
-  const [session, setSession] = useState<Session | null>(fakeSession);
+  const [session, setSession] = useState<Session | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -290,7 +273,7 @@ function App() {
     const handleUnload = () => {
       const runningTask = tasksRef.current.find((t) => t.status === "running");
       if (runningTask && session) {
-        const apiUrl = import.meta.env.VITE_API_URL;
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
         fetch(`${apiUrl}/tasks`, {
           method: "POST",
           headers: {
@@ -307,11 +290,23 @@ function App() {
     return () => window.removeEventListener("beforeunload", handleUnload);
   }, [session, tasksRef]);
 
-  const [isLoadingSession] = useState(false);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
 
-  // AUTH BYPASS: Skip Supabase auth listener, just init preferences
   useEffect(() => {
-    initPreferences();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsLoadingSession(false);
+      if (session) initPreferences();
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) initPreferences();
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const initPreferences = async () => {
@@ -365,9 +360,7 @@ function App() {
     );
   }
 
-  // AUTH BYPASS: Skip login check
-  // if (!session) return <Login />;
-  if (!session) return null;
+  if (!session) return <Login />;
 
   return (
     <div className="min-h-screen bg-transparent text-ink selection:bg-highlighter-yellow/30 font-type overflow-x-hidden">
